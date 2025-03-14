@@ -1,0 +1,5 @@
+Duże modele językowe oparte na sieci transformer przyzwyczaiły nas do tego, że mogą realizować wiele różnych zadań, nawet tych mniej oczywistych.
+Celem pracy jest sprawdzenie, jak modele typu GPT, a także mniejsze modele oparte na architekturze transformer, poradzą sobie z zadaniem polegającym
+na grze w popularną grę Snake. Praca będzie polegała na wyborze odpowiednich parametrów zarówno do promptów (w przypadku dużych modeli), jak i do konfiguracji 
+ustawień treningowych (dla mniejszych modeli), pozwalających modelowi na wygrywanie w Snake’a z dużą skutecznością. Porównanie będzie oparte na prostym agencie. 
+Końcowym etapem pracy będzie zestawienie najlepiej skonfigurowanych modeli w postaci benchmarku i wyłonienie zwycięzcy.
