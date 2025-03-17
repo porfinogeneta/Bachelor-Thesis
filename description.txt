@@ -1,3 +1,11 @@
+[eng]
+Large language models based on the transformer network have accustomed us to the fact that they can perform many different tasks, even less obvious ones.
+The goal of this work is to check how GPT-type models, as well as smaller models based on the transformer architecture, will handle the task of playing the 
+popular Snake game. The work will involve selecting appropriate parameters for both prompts (in the case of large models) and training settings configuration 
+(for smaller models), allowing the model to win Snake with high effectiveness. The comparison will be based on a simple agent. The final stage of the work will
+be to compile the best-configured models in the form of a benchmark and select the winner.
+
+[pl]
 Duże modele językowe oparte na sieci transformer przyzwyczaiły nas do tego, że mogą realizować wiele różnych zadań, nawet tych mniej oczywistych.
 Celem pracy jest sprawdzenie, jak modele typu GPT, a także mniejsze modele oparte na architekturze transformer, poradzą sobie z zadaniem polegającym
 na grze w popularną grę Snake. Praca będzie polegała na wyborze odpowiednich parametrów zarówno do promptów (w przypadku dużych modeli), jak i do konfiguracji 

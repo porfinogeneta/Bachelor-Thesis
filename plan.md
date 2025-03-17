@@ -17,7 +17,7 @@
 - plansz 8x8
 
 ## Warianty
-
+<!-- 
 ### Wariant 1 
 - 1 snake, jabłka w tych samych miejscach, ściany na brzegach
 
@@ -33,16 +33,31 @@
 - LLMy dają odp na ten globalny stan
 
 - porównujemy który snake zdobędzie najwięcej jabłek
-- grę sensowną definiujemy jako niewiele gorszą od prostego agenta LLM
+- grę sensowną definiujemy jako niewiele gorszą od prostego agenta LLM -->
 
-### Plan na sobotę
-- napisać tego snake'a, chcielibyśmy mieć możliwość dostosowywania parametrów planszy
+### Obecny snake
+- 1 wąż
+- 16x16 plansza
+- jabłka w losowych miejscach
+- uderzenie w siebie samego skutkuje końcem gry, wyjście poza planszę również
+
+### Immediate TODO
+- napisanie komunikacji międzyprocesowej, tak by LLM mógł grać
 - przekonać promptem MiniMax'a do generowania jakiś ruchów, zobaczyć jakie ma scory
 
 # Dodatkowe uwagi
 
 
 # Cele
-- wybór odpowiednich parametrów promptów dla dużych modeli
+- wybór odpowiednich parametrów promptów dla dużych modeli, i odpowiednich parametrów API
 - wybór odpowiednich parametrów treningu dla mniejszych modeli (fine tuning albo od zera)
 - chcemy wiedzieć co było przyczyną porażki danego snake'a, jaki był win-rate, ile zdobył najwięcej pkt itp.
+
+
+### Parametry do dostosowywania dla snake'a
+
+- cell size?
+- rozmiar planszy?
+
+
+
