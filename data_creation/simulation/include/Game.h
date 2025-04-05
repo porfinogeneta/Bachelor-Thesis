@@ -10,7 +10,7 @@
 using namespace std;
 
 class Game {
-private:
+protected:
     int n_snakes = 2;
     int n_apples = 5;
     int board_width = 10;
@@ -18,7 +18,8 @@ private:
     string log_filename = "game_log.txt";
     ofstream log_file; 
     
-    std::vector<std::pair<int, int>> generateDistinctPairs(size_t n);
+    vector<std::pair<int, int>> generateDistinctPairs(size_t n);
+    vector<vector<pair<int, int> > > all_snakes_moves;
 
 public:
 
@@ -34,7 +35,7 @@ public:
     bool is_snake_out_of_bounds(Snake& snake_moving);
     bool is_snake_apple_colliding(Snake& snake_moving, std::vector<std::pair<int, int>>& apples);
     
-    void print_snake_game_state(std::vector<Snake>& snakes, std::vector<std::pair<int, int>>& apples, int turn);
+    void print_snake_game_state(std::vector<Snake>& snakes, std::vector<std::pair<int, int>>& apples, int turn, vector<vector<pair<int, int> > > all_snakes_moves);
     void run_game();
 };
 

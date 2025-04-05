@@ -26,12 +26,14 @@ pair<int, int> Snake::get_move(char move) {
 void Snake::move_snake(char direction){
     pair<int, int> move_pair = get_move(direction);
     // cout << move_pair.first << endl;
+    pair<int, int> head_cpy = head;
+
     head.first += move_pair.first;
     head.second += move_pair.second;
 
-    for (size_t i = 0; i < tail.size(); i++){
-        tail[i].first += move_pair.first;
-        tail[i].second += move_pair.second;
+    if (tail.size() > 0){
+        tail.pop_back();
+        tail.insert(tail.begin(), head_cpy);
     }
 
     // cout << head.first << endl;

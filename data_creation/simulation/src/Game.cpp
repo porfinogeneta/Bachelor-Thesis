@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <iostream>
+#include <string>
 #include <random>
 #include <set>
 
@@ -92,7 +93,15 @@ void Game::get_apples_positions(vector<pair<int, int> >& apples, vector<pair<int
 bool Game::is_snake_colliding_snakes(Snake& snake_moving, vector<Snake>& snakes){
     pair<int, int> moving_head = snake_moving.head;
 
+    // head collision with the snake itself
+    for (const auto& tail_segment : snake_moving.tail) {
+        if (moving_head == tail_segment) {
+            return true;
+        }
+    }
+
     for (const Snake& other_snake: snakes){
+        
         if (&snake_moving == &other_snake) {
             continue;
         }
@@ -109,12 +118,7 @@ bool Game::is_snake_colliding_snakes(Snake& snake_moving, vector<Snake>& snakes)
             }
         }
         
-        // collision with this snake's tail
-        for (const auto& tail_segment : snake_moving.tail) {
-            if (moving_head == tail_segment) {
-                return true;
-            }
-        }
+        
     }
 
     return false;
@@ -142,7 +146,7 @@ bool Game::is_snake_apple_colliding(Snake& snake_moving, vector<pair<int, int> >
 }
 
 
-void Game::print_snake_game_state(vector<Snake>& snakes, vector<pair<int, int> >& apples, int turn) {
+void Game::print_snake_game_state(vector<Snake>& snakes, vector<pair<int, int> >& apples, int turn, vector<vector<pair<int, int> > > all_snakes_moves) {
     // Create an empty board representation
     vector<vector<char> > board(board_height, vector<char>(board_width, '.'));
     
@@ -162,25 +166,25 @@ void Game::print_snake_game_state(vector<Snake>& snakes, vector<pair<int, int> >
         for (const auto& segment : snake.tail) {
             if (segment.first >= 0 && segment.first < board_height && 
                 segment.second >= 0 && segment.second < board_width) {
-                board[segment.first][segment.second] = 'o';
+                board[segment.first][segment.second] = '0' + i;
             }
         }
         
         // Place snake head (using different numbers for different snakes)
         if (snake.head.first >= 0 && snake.head.first < board_height && 
             snake.head.second >= 0 && snake.head.second < board_width) {
-            board[snake.head.first][snake.head.second] = '0' + i;  // Using '0', '1', etc. for different snake heads
+            board[snake.head.first][snake.head.second] = 'H';  // Using '0', '1', etc. for different snake heads
         }
     }
     
     // Print the current turn information
     if (log_file.is_open()){
-        log_file << "========== Turn " << turn << " ==========" << endl;
+        log_file << "========== Turn " << turn << " - " << turn % n_snakes << " ==========" << endl;
 
         // Print the top border
         log_file << "+";
         for (int j = 0; j < board_width; j++) {
-            cout << "-";
+            log_file<< "-";
         }
         log_file << "+" << endl;
         
@@ -207,7 +211,19 @@ void Game::print_snake_game_state(vector<Snake>& snakes, vector<pair<int, int> >
             log_file << "Length: " << snake.tail.size() + 1 << endl;
         }
         
-        log_file << "Apples: " << apples.size() << endl;
+        for (size_t i = 0; i < all_snakes_moves.size(); i++){
+            log_file << "Snake " << i << ": ";
+            for (const auto& position : all_snakes_moves[i]) {
+                log_file << "(" << position.first << "," << position.second << ") ";
+            }
+            log_file << endl;
+        }
+
+        for (size_t i = 0; i < apples.size(); i++){
+            log_file << "Apple " << i << ": ";
+            log_file << "(" << apples[i].first << "," << apples[i].second << ") ";
+        }
+        
         log_file << endl;
         }
     
@@ -222,12 +238,17 @@ void Game::run_game(){
     vector<pair<int, int> > snake_positions;
     vector<Snake> snakes;
 
-
+    
     get_beginning_snake_positions(snake_positions);
     // initialize snakes
     for (const pair<int, int>& snake_pos: snake_positions){
         snakes.push_back(Snake(snake_pos.first, snake_pos.second));
+        vector<pair <int, int> > beginning_positions;
+        beginning_positions.push_back(snake_pos);
+        all_snakes_moves.push_back(beginning_positions);
     }
+
+    
     
     // populate apples positions vector
     vector<pair<int, int> > apples;
@@ -235,20 +256,28 @@ void Game::run_game(){
 
     
 
-    Agent random_agent = Agent();
+    Agent agent = Agent();
 
     while (is_playing)
     {
         int snake_moving_idx = turn % n_snakes;
         
         // this is the place where agent will come and decide on move
-        char direction = random_agent.getRandomChar();
+        // char direction = random_agent.getRandomChar();
+        char direction = agent.bfs_based_agent(
+            snakes,
+            apples,
+            snake_moving_idx,
+            board_width,
+            board_height
+        );
 
         // segment that might be added if collided with an apple
         pair<int, int> new_snake_segment = snakes[snake_moving_idx].get_last_snake_segment();
 
         snakes[snake_moving_idx].move_snake(direction);
 
+        all_snakes_moves[snake_moving_idx].push_back(snakes[snake_moving_idx].head);
         // for (const auto& position : apples) {
         //     cout << position.first << position.second << endl;
         // }
@@ -281,7 +310,7 @@ void Game::run_game(){
         turn++;
 
         
-        print_snake_game_state(snakes, apples, turn);
+        print_snake_game_state(snakes, apples, turn, all_snakes_moves);
 
     }
 

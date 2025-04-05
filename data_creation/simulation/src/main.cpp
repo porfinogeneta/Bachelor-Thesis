@@ -25,11 +25,11 @@ int main(int argc, char* argv[]) {
     Game snakeGame;
     snakeGame.run_game();
 
-    if (argc > 1){
-        string filename = argv[1];
-        cout << "Logging game to file: " << filename << endl;
-        snakeGame.set_log_file(filename);
-    }
+    // if (argc > 1){
+    //     string filename = argv[1];
+    //     cout << "Logging game to file: " << filename << endl;
+    //     snakeGame.set_log_file(filename);
+    // }
 
     
     
