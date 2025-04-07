@@ -264,6 +264,16 @@ void Game::run_game(){
         
         // this is the place where agent will come and decide on move
         // char direction = random_agent.getRandomChar();
+
+        set<pair <int, int> > apples_positions(apples.begin(), apples.end());
+        set<pair <int, int> > snake_positions = get_positions_occupiend_by_snakes(snake_moving_idx, snakes);
+
+        MCTS mcts = MCTS(SnakeState(turn, snake_positions, apples_positions, snakes[snake_moving_idx], board_width, board_height), new Node(' ', nullptr), 1.0, 0, 100);
+
+        char d = mcts.best_move();
+
+        cout << "Best move: " << d << endl;
+
         char direction = agent.bfs_based_agent(
             snakes,
             apples,

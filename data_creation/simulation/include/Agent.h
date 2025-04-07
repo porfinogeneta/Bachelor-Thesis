@@ -1,11 +1,14 @@
 #include <vector>
+#include <set>
 #include <Snake.h>
-#include "Game.h"
 
 #ifndef AGENT_H
 #define AGENT_H
 
 using namespace std;
+
+
+set<pair<int, int> > get_positions_occupiend_by_snakes(size_t current_snake_idx, const vector<Snake>& snakes);
 
 class Agent {
 private:
@@ -21,6 +24,8 @@ public:
         int board_width,
         int board_height
     );
+
+
 
 };
 
