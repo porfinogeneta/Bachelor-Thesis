@@ -32,7 +32,9 @@ void Snake::move_snake(char direction){
     head.second += move_pair.second;
 
     if (tail.size() > 0){
+        // get rid of the last segment
         tail.pop_back();
+        // at the beginning of the tail insert the head
         tail.insert(tail.begin(), head_cpy);
     }
 

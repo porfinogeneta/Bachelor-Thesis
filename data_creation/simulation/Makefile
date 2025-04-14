@@ -1,6 +1,6 @@
 # Makefile for C++ Snake Game
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra
+CXXFLAGS = -std=c++17 -Wall -Wextra
 TARGET = snake_game
 SRC_DIR = src
 INCLUDE_DIR = include

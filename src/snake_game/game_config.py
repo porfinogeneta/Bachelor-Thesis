@@ -2,7 +2,7 @@ import pygame
 
 
 class GameConfig:
-    def __init__(self, width=512, height=512, fps=30, cell_size=32):
+    def __init__(self, width=512, height=512, fps=10, cell_size=32):
 
         pygame.init()
 

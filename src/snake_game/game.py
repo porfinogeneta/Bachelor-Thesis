@@ -115,7 +115,7 @@ class Game:
                 self.snake.update(direction, ate_apple=ate_apple)
             
             self.draw()
-            direction = (0,0)
+            # direction = (0,0)
 
 
             pygame.display.flip()
