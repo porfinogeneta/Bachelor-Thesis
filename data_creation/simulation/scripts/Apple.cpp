@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Apple.h"
 
-using namespace std;
+// using namespace std;
 
 
 Apple::Apple(int x, int y) {

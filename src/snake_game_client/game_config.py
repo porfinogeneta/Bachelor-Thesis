@@ -2,10 +2,12 @@ import pygame
 
 
 class GameConfig:
-    def __init__(self, width=512, height=512, fps=10, cell_size=32):
+
+    # width and height are in blocks
+    def __init__(self, width=10, height=10, fps=10, cell_size=32):
 
         pygame.init()
-
+    
         self.width = width
         self.height = height
         self.fps = fps

@@ -8,16 +8,17 @@
 
 
 
-State::State(int n_snakes, int n_apples, int board_width, int board_height, string log_filename) {
+
+State::State(int n_snakes, int n_apples, int board_width, int board_height) {
 
     // set game parameters
     this->n_snakes = n_snakes;
     this->n_apples = n_apples;
     this->board_width = board_width;
     this->board_height = board_height;
-    this->log_filename = log_filename;
+    // this->coutname = coutname;
     
-    set_log_file(log_filename);
+    // set_cout(coutname);
 
     snakes.clear();
 
@@ -38,20 +39,20 @@ State::State(int n_snakes, int n_apples, int board_width, int board_height, stri
 }
 
 
-State::~State(){
-    if (log_file.is_open()){
-        log_file.close();
-    }
-}
+// State::~State(){
+//     if (cout.is_open()){
+//         cout.close();
+//     }
+// }
 
 
-void State::set_log_file(const std::string& filename) {
-    if (log_file.is_open()) {
-        log_file.close();
-    }
-    log_filename = filename;
-    log_file.open(log_filename);
-}
+// void State::set_cout(const std::string& filename) {
+//     if (cout.is_open()) {
+//         cout.close();
+//     }
+//     coutname = filename;
+//     cout.open(coutname);
+// }
 
 
 // generates distinct pairs in range [0, n] (beginning snakes and apples positions)
@@ -195,6 +196,7 @@ bool State::is_snake_apple_colliding(Snake& snake_moving, vector<Apple>& apples)
 // returns false if snake collided with another snake or with the wall
 bool State::move(char direction, int snake_moving_idx){
 
+    idx_prev_snake = snake_moving_idx;
     // check if snake is already eliminated, treat eliminated snake as a wall
     if (eliminated_snakes.find(snake_moving_idx) != eliminated_snakes.end()){
         return false;
@@ -255,7 +257,8 @@ bool State::is_game_over() {
 }
 
 
-void State::print_game_state(int turn) {
+
+void State::print_game_state() {
 
     // empty board representation
     vector<vector<char>> board(board_height, vector<char>(board_width, '.'));
@@ -287,67 +290,66 @@ void State::print_game_state(int turn) {
         }
     }
     
-    // Print the current turn information
-    if (log_file.is_open()) {
 
-        if (turn == 0) {
-            log_file << "========== Game Start ==========" << endl;
+
+    if (turn == 0) {
+        cout << "========== Game Start ==========" << endl;
+    }else {
+        pair<int, int> curr_move = snakes[(turn-1) % n_snakes].moves_history.back();
+        pair<int, int> prev_move;
+        if (snakes.size() == 1) {
+            prev_move = curr_move;
         }else {
-            pair<int, int> curr_move = snakes[(turn-1) % n_snakes].moves_history.back();
-            pair<int, int> prev_move;
-            if (snakes.size() == 1) {
-                prev_move = curr_move;
-            }else {
-                prev_move = snakes[(turn-1) % n_snakes].moves_history[snakes[(turn-1) % n_snakes].moves_history.size() - 2];
-            }
-            log_file << "========== Turn " << turn << " - Snake " << turn % n_snakes \
-            << " | Snake" << (turn-1) % n_snakes << " " <<  "(" << prev_move.first << "," << prev_move.second << ")" \
-            << " -> " << "(" << curr_move.first << "," << curr_move.second << ")" << " ==========" << endl;
+            prev_move = snakes[(turn-1) % n_snakes].moves_history[snakes[(turn-1) % n_snakes].moves_history.size() - 2];
         }
-        log_file << "+";
-        for (int j = 0; j < board_width; j++) {
-            log_file << "-";
-        }
-        log_file << "+" << endl;
-        
-        for (int i = 0; i < board_height; i++) {
-            log_file << "|";
-            for (int j = 0; j < board_width; j++) {
-                log_file << board[i][j];
-            }
-            log_file << "|" << endl;
-        }
-        
-        log_file << "+";
-        for (int j = 0; j < board_width; j++) {
-            log_file << "-";
-        }
-        log_file << "+" << endl;
-        
-        // snake positions information
-        for (size_t i = 0; i < snakes.size(); i++) {
-            const Snake& snake = snakes[i];
-            if (eliminated_snakes.find(i) != eliminated_snakes.end()) {
-                log_file << "(dead) Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
-            }else {
-                log_file << "Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
-
-            }
-            log_file << "Length: " << snake.tail.size() + 1 << endl;
-            
-            // print movement history
-            log_file << "  Movement history: ";
-            for (const auto& position : snake.moves_history) {
-                log_file << "(" << position.first << "," << position.second << ") ";
-            }
-            log_file << endl;
-        }
-
-        // print apple positions
-        log_file << "Apples: ";
-        for (size_t i = 0; i < apples.size(); i++) {
-            log_file << "(" << apples[i].position.first << "," << apples[i].position.second << ") ";
-        }
-        log_file << endl << endl;
+        cout << "========== Turn " << turn << " - Snake " << turn % n_snakes \
+        << " | Snake" << (turn-1) % n_snakes << " " <<  "(" << prev_move.first << "," << prev_move.second << ")" \
+        << " -> " << "(" << curr_move.first << "," << curr_move.second << ")" << " ==========" << endl;
     }
+    cout << "+";
+    for (int j = 0; j < board_width; j++) {
+        cout << "-";
+    }
+    cout << "+" << endl;
+    
+    for (int i = 0; i < board_height; i++) {
+        cout << "|";
+        for (int j = 0; j < board_width; j++) {
+            cout << board[i][j];
+        }
+        cout << "|" << endl;
+    }
+    
+    cout << "+";
+    for (int j = 0; j < board_width; j++) {
+        cout << "-";
+    }
+    cout << "+" << endl;
+    
+    // snake positions information
+    for (size_t i = 0; i < snakes.size(); i++) {
+        const Snake& snake = snakes[i];
+        if (eliminated_snakes.find(i) != eliminated_snakes.end()) {
+            cout << "(dead) Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
+        }else {
+            cout << "Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
+
+        }
+        cout << "Length: " << snake.tail.size() + 1 << endl;
+        
+        // print movement history
+        cout << "  Movement history: ";
+        for (const auto& position : snake.moves_history) {
+            cout << "(" << position.first << "," << position.second << ") ";
+        }
+        cout << endl;
+    }
+
+    // print apple positions
+    cout << "Apples: ";
+    for (size_t i = 0; i < apples.size(); i++) {
+        cout << "(" << apples[i].position.first << "," << apples[i].position.second << ") ";
+    }
+    cout << endl << endl;
+    
 }

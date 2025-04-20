@@ -12,6 +12,12 @@ public:
     pair<int, int> position;
     Apple(int x, int y);
     void print();
+
+    /*    JSON serialization format:
+        {
+            "position": [x, y]
+        }
+    */
 };
 
 #endif

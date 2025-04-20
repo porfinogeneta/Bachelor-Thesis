@@ -18,22 +18,23 @@ public:
     int n_apples;
     int board_width;
     int board_height;
-    
+    int turn = 1;
 
     // state memory
     vector<Snake> snakes;
     vector<Apple> apples;
     set<int> eliminated_snakes;
+    int idx_prev_snake;
+    string whoose_prev_turn;
 
-
-    string log_filename = "game_log.txt";
-    ofstream log_file; 
+    // string log_filename = "game_log.txt";
+    // ofstream log_file; 
 
     vector<pair<int, int>> generate_distinct_pairs(size_t n);
     vector<vector<pair<int, int> > > all_snakes_moves;
 
-    State(int n_snakes, int n_apples, int board_width, int board_height, string log_filename = "game_log.txt");
-    ~State();
+    State(int n_snakes, int n_apples, int board_width, int board_height);
+    // ~State();
 
     void set_log_file(const string& filename);
     bool move(char direction, int snake_moving_idx);
@@ -45,8 +46,7 @@ public:
     bool is_snake_out_of_bounds(Snake& snake_moving);
     bool is_snake_apple_colliding(Snake& snake_moving, vector<Apple>& apples);
     
-    void print_game_state(int turn);
-    void run_game();
+    void print_game_state();
 };
 
 #endif

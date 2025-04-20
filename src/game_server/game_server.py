@@ -4,8 +4,8 @@ import threading
 import time
 
 # local packages
-from snake_game.game import Game
-from snake_game.game_config import GameConfig
+from snake_game_client.main import Game
+from snake_game_client.game_config import GameConfig
 
 
 class GameServer:
