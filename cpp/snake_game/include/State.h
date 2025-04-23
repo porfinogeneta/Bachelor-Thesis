@@ -18,12 +18,14 @@ public:
     int n_apples;
     int board_width;
     int board_height;
-    int turn = 1;
+    int turn = 0;
 
     // state memory
     vector<Snake> snakes;
     vector<Apple> apples;
     set<int> eliminated_snakes;
+    // apples state after i-th turn (0th element in the vector is the initial position at the beginning)
+    vector<vector<Apple> > apples_history;
     int idx_prev_snake;
     string whoose_prev_turn;
 
@@ -47,6 +49,7 @@ public:
     bool is_snake_apple_colliding(Snake& snake_moving, vector<Apple>& apples);
     
     void print_game_state();
+    void get_full_history();
 };
 
 #endif

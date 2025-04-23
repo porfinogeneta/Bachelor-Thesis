@@ -57,7 +57,8 @@ class Serializer:
                 "id": i,
                 "head": [snake.head[0], snake.head[1]],
                 "tail": [[x[0], x[1]] for x in snake.tail],
-                "moves_history": [[x[0], x[1]] for x in snake.moves_history]
+                # MAYBE HISTORY SERIALIZATION WOULD MAKE SENSE LATER ON, right now it's a waste of memory
+                # "moves_history": [[x[0], x[1]] for x in snake.moves_history]
             }
             jsonState["snakes"].append(snake_json)
 
@@ -86,8 +87,10 @@ class Serializer:
             for i in range(n_snakes):
                 snake_json = stateJson["snakes"][i]
                 snake = Snake(snake_json["head"][0], snake_json["head"][1])
-                snake.tail = snake_json["tail"]
-                snake.moves_history = snake_json["moves_history"]
+                # getting list from json, needs to be changed to a list of tuples with positions
+                snake.tail = [tuple(pos) for pos in snake_json["tail"]]
+                # MAYBE HISTORY SERIALIZATION WOULD MAKE SENSE LATER ON, right now it's a waste of memory
+                # snake.moves_history = snake_json["moves_history"]
                 snakes.append(snake)
 
             for apple_position in stateJson["apples"]:
@@ -95,7 +98,7 @@ class Serializer:
                 apple = Apple(x, y)
                 apples.append(apple)
 
-            eliminated_snakes = set(stateJson["eliminated_snakes"])
+            eliminated_snakes = set([int(elem) for elem in stateJson["eliminated_snakes"]])
 
             state = State(n_snakes, n_apples, board_width, board_height)
             state.turn = turn

@@ -21,7 +21,12 @@ class State:
     def is_snake_colliding_snakes(self, snake: Snake, snakes: List[Snake]) -> bool:
         moving_head = snake.head
 
+
+        print("at least eneted")
+        print(moving_head)
+        print(snake.tail)
         if moving_head in snake.tail:
+            
             return True
         
         for other_snake in snakes:
@@ -66,10 +71,13 @@ class State:
         self.snakes[snake_moving_idx].move(direction)
         self.snakes[snake_moving_idx].moves_history.append(self.snakes[snake_moving_idx].head)
 
-        if self.is_snake_colliding_snakes(self.snakes[snake_moving_idx], self.snakes) \
-            or self.is_snake_out_of_bounds(self.snakes[snake_moving_idx]):
-                
+        if (self.is_snake_colliding_snakes(self.snakes[snake_moving_idx], self.snakes)) \
+            or (self.is_snake_out_of_bounds(self.snakes[snake_moving_idx])) \
+            or (self.snakes[snake_moving_idx].head == new_snake_segment and len(self.snakes[snake_moving_idx].tail) == 1):
                 self.eliminated_snakes.add(snake_moving_idx)
+                # in the case of two segment snake i don't allow move to the previous segment
+                if self.snakes[snake_moving_idx].head == new_snake_segment and len(self.snakes[snake_moving_idx].tail) == 1:
+                    self.snakes[snake_moving_idx].head = self.snakes[snake_moving_idx].tail[0]
                 return False
         
 

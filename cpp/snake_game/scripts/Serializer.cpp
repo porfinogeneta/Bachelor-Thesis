@@ -17,15 +17,16 @@ string Serializer::serialize_snake(Snake &snake) {
     }
     json += "]";
 
-    // add moves history
-    json += ", \"moves_history\": [";
-    for (size_t i = 0; i < snake.moves_history.size(); ++i) {
-        json += "[" + to_string(snake.moves_history[i].first) + ", " + to_string(snake.moves_history[i].second) + "]";
-        if (i < snake.moves_history.size() - 1) {
-            json += ", ";
-        }
-    }
-    json += "]";
+    // MAYBE HISTORY SERIALIZATION WOULD MAKE SENSE LATER ON, right now it's a waste of memory
+    // // add moves history
+    // json += ", \"moves_history\": [";
+    // for (size_t i = 0; i < snake.moves_history.size(); ++i) {
+    //     json += "[" + to_string(snake.moves_history[i].first) + ", " + to_string(snake.moves_history[i].second) + "]";
+    //     if (i < snake.moves_history.size() - 1) {
+    //         json += ", ";
+    //     }
+    // }
+    // json += "]";
 
     return json;
 }
@@ -93,11 +94,12 @@ State Serializer::deserialize_state(const string& serialized_state){
             snake.tail.push_back(make_pair(tail_x, tail_y));
         }
         
-        for (const auto& move : snake_data["moves_history"]) {
-            int move_x = move[0];
-            int move_y = move[1];
-            snake.moves_history.push_back(make_pair(move_x, move_y));
-        }
+        // // MAYBE HISTORY SERIALIZATION WOULD MAKE SENSE LATER ON, right now it's a waste of memory
+        // for (const auto& move : snake_data["moves_history"]) {
+        //     int move_x = move[0];
+        //     int move_y = move[1];
+        //     snake.moves_history.push_back(make_pair(move_x, move_y));
+        // }
         
         snakes.push_back(snake);
     }

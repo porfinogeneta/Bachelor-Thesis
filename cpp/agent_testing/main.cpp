@@ -8,9 +8,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../include/State.h"
-#include "../include/Serializer.h"
-#include "../include/Agent.h"
+#include "../snake_game/include/State.h"
+#include "../snake_game/include/Serializer.h"
+#include "../snake_game/include/Agent.h"
 // #include "../include/Snake.h"
 
 
@@ -199,7 +199,7 @@ int main() {
 
 
 
-    // 0 means python turn, 1 means cpp turn
+    // 0 is python snake, 1 is cpp
     while (true)
     {   
         cout << "C++'s turn" << endl;
@@ -207,7 +207,7 @@ int main() {
         if (is_cpp_turn == true){
             char direction = agent.bfs_based_agent(state, 1);
             state.move(direction, 1);
-            state.turn++;
+            
 
             send_serialized_state(&state, &serializer, client_socket);
             is_cpp_turn = false; // it's python turn

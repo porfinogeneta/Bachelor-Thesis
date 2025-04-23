@@ -29,13 +29,18 @@ State::State(int n_snakes, int n_apples, int board_width, int board_height) {
     // initialize snakes
     for (size_t i = 0; i < snake_heads.size(); i++) {
         Snake new_snake = Snake(snake_heads[i].first, snake_heads[i].second);
+        // save snake's initial position
         new_snake.moves_history.push_back(snake_heads[i]);
+        // save snake's initial tail length
+        new_snake.tails_len_history.push_back(new_snake.tail.size());
         snakes.push_back(new_snake);
     }
 
     // create apples positions
     apples.clear();
     get_apples_positions(apples);
+    // apples history begins with apples state in the first turn
+    apples_history.push_back(apples);
 }
 
 
@@ -199,6 +204,9 @@ bool State::move(char direction, int snake_moving_idx){
     idx_prev_snake = snake_moving_idx;
     // check if snake is already eliminated, treat eliminated snake as a wall
     if (eliminated_snakes.find(snake_moving_idx) != eliminated_snakes.end()){
+        turn++;
+        // after the move, update apples history
+        // apples_history.push_back(apples);
         return false;
     }
     
@@ -210,27 +218,31 @@ bool State::move(char direction, int snake_moving_idx){
     // segment that might be added if collided with an apple
     pair<int, int> new_snake_segment = snakes[snake_moving_idx].get_last_snake_segment();
 
-    snakes[snake_moving_idx].move_snake(direction);
+
     
+
+    snakes[snake_moving_idx].move_snake(direction);
+
     // add new position to the snake moves history
     snakes[snake_moving_idx].moves_history.push_back(snakes[snake_moving_idx].head);
+    // add tail length to history
+    snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
 
-
-    if (is_snake_colliding_snakes(snakes[snake_moving_idx], snakes)
-        || is_snake_out_of_bounds(snakes[snake_moving_idx])
-        ) {
-            // acknowledge that snake is eliminated
-            eliminated_snakes.insert(snake_moving_idx);
-            // // after this move snake is dead, but it has moved the posisition of it's body is not correct, to mitigate
-            // // this problem, we need to remove the last move from the moves history
-            // // and make the first element from the tail to be a head, and eliminated
-            // // tail segment would reappear
-            // snakes[snake_moving_idx].moves_history.pop_back();
-            // pair<int, int> prev_head_cpy = snakes[snake_moving_idx].tail[0];
-            // snakes[snake_moving_idx].head = prev_head_cpy;
-            // snakes[snake_moving_idx].tail.push_back(new_snake_segment);
-            return false;
+    if (is_snake_colliding_snakes(snakes[snake_moving_idx], snakes) || 
+        is_snake_out_of_bounds(snakes[snake_moving_idx]) || 
+        (snakes[snake_moving_idx].head == new_snake_segment && snakes[snake_moving_idx].tail.size() == 1)) {
+        
+        eliminated_snakes.insert(snake_moving_idx);
+        // after the move, update apples history
+        apples_history.push_back(apples);
+        turn++;
+        
+        // in the case of two segment snake i don't allow to move to the previous segment
+        if (snakes[snake_moving_idx].head == new_snake_segment && snakes[snake_moving_idx].tail.size() == 1) {
+            snakes[snake_moving_idx].head = snakes[snake_moving_idx].tail[0];
         }
+        return false;
+    }
 
     if (is_snake_apple_colliding(snakes[snake_moving_idx], apples)){
         // cout << "eating" << endl;
@@ -240,6 +252,11 @@ bool State::move(char direction, int snake_moving_idx){
         // function generates new apple position that's not on the snake or on one of the apples
         get_apples_positions(apples);
     }
+
+    // after the move update apples history
+    apples_history.push_back(apples);
+
+    turn++;
 
     return true;
 
@@ -256,6 +273,44 @@ bool State::is_game_over() {
     return eliminated_snakes.size() == (uint)n_snakes;
 }
 
+
+void State::get_full_history(){
+
+    // turns amount
+    cout << "Turns " << turn << endl;
+
+    // snake positions information
+    for (size_t i = 0; i < snakes.size(); i++) {
+        const Snake& snake = snakes[i];
+        cout << "Length: " << snake.tail.size() + 1 << endl;
+        
+        // print movement history
+        cout << "Snake " << i << endl;
+        for (const auto& position : snake.moves_history) {
+            cout << "(" << position.first << "," << position.second << ") ";
+        }
+        cout << endl;
+
+        // print tail sizes history
+        cout << "Tail Snake" << i << endl;
+        for (const auto& size : snake.tails_len_history) {
+            cout << size << " ";
+        }
+
+        cout << endl;
+    }
+
+    cout << "Apples" << endl;
+    int apple_vec_index = 0;
+    for (const auto& apple_vec : apples_history){
+        for (const auto& apple : apple_vec){
+            cout << "(" << apple.position.first << "," << apple.position.second << ") ";
+        }
+
+        cout << apple_vec_index << endl;
+        apple_vec_index++;
+    }
+}
 
 
 void State::print_game_state() {

@@ -8,8 +8,8 @@ OBJ_DIR := build
 
 # ścieżki do plików
 SRC_DIR := ..
-INCLUDE_DIR := ../include
-SCRIPTS_DIR := ../scripts
+INCLUDE_DIR := ../snake_game/include
+SCRIPTS_DIR := ../snake_game/scripts
 
 # wszystkie pliki źródłowe
 SRCS := main.cpp \
@@ -26,7 +26,7 @@ SRCS := main.cpp \
 
 # lista object files (zrobiona z plików wejściowych)
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(SRCS)))
-OBJS += $(patsubst $(SCRIPTS_DIR)/%.cpp,$(OBJ_DIR)/scripts/%.o,$(filter $(SCRIPTS_DIR)/%.cpp,$(SRCS)))
+# OBJS += $(patsubst $(SCRIPTS_DIR)/%.cpp,$(OBJ_DIR)/scripts/%.o,$(filter $(SCRIPTS_DIR)/%.cpp,$(SRCS)))
 
 all: $(BIN)
 

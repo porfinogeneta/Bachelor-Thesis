@@ -15,6 +15,8 @@ public:
 
     // snake moves history
     vector<pair<int, int>> moves_history;
+    // snake tail lengths history (size is measured after a move)
+    vector<size_t> tails_len_history;
 
     Snake(int x, int y);
     void move_snake(char direction);
