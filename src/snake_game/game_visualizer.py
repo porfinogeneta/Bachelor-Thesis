@@ -1,7 +1,7 @@
 import pygame
 import sys
 import json
-from serializer import Serializer  # Using your existing serializer
+from .serializer import Serializer  # Using your existing serializer
 
 # Colors
 BLACK = (0, 0, 0)
@@ -114,7 +114,7 @@ class GameVisualizer:
             text_surface = self.font.render(eliminated_text, True, BLACK)
             self.screen.blit(text_surface, (10, 10))
     
-    def draw_turn_info(self, turn, prev_turn):
+    def draw_turn_info(self, turn):
         """Draw turn information"""
         turn_text = f"Turn: {turn}"
         text_surface = self.font.render(turn_text, True, BLACK)
@@ -148,7 +148,7 @@ class GameVisualizer:
         
         # Draw information
         self.draw_eliminated_info(state.eliminated_snakes)
-        self.draw_turn_info(state.turn, state.whoose_prev_turn)
+        self.draw_turn_info(state.turn)
         
         # Update display
         pygame.display.flip()

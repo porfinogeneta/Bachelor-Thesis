@@ -1,7 +1,7 @@
 
-from state import State
-from snake import Snake
-from apple import Apple
+from snake_game.state import State
+from snake_game.snake import Snake
+from snake_game.apple import Apple
 import json
 
 class Serializer:
@@ -58,7 +58,7 @@ class Serializer:
                 "head": [snake.head[0], snake.head[1]],
                 "tail": [[x[0], x[1]] for x in snake.tail],
                 # MAYBE HISTORY SERIALIZATION WOULD MAKE SENSE LATER ON, right now it's a waste of memory
-                # "moves_history": [[x[0], x[1]] for x in snake.moves_history]
+                "moves_history": [[x[0], x[1]] for x in snake.moves_history]
             }
             jsonState["snakes"].append(snake_json)
 
@@ -90,7 +90,7 @@ class Serializer:
                 # getting list from json, needs to be changed to a list of tuples with positions
                 snake.tail = [tuple(pos) for pos in snake_json["tail"]]
                 # MAYBE HISTORY SERIALIZATION WOULD MAKE SENSE LATER ON, right now it's a waste of memory
-                # snake.moves_history = snake_json["moves_history"]
+                snake.moves_history = snake_json["moves_history"]
                 snakes.append(snake)
 
             for apple_position in stateJson["apples"]:

@@ -38,7 +38,7 @@ public:
     State(int n_snakes, int n_apples, int board_width, int board_height);
     // ~State();
 
-    void set_log_file(const string& filename);
+    // void set_log_file(const string& filename);
     bool move(char direction, int snake_moving_idx);
     void get_beginning_snake_heads_positions(vector<pair<int, int>>& snakes);
     void get_apples_positions(vector<Apple>& apples);

@@ -177,36 +177,21 @@ int main() {
     cout << "Python client connected" << endl;
     
     
-    // initialize game
-    srand((unsigned)time(0));
-    // 1 means it is, 0 it's not
-    int is_cpp_allowed_to_move_first = rand() % n_snakes;
-    bool is_cpp_turn = true;
-    
-    cout << (is_cpp_allowed_to_move_first == 0 ? "First turn is Python's turn" : "First turn is C++'s turn") << endl;
-
-
-
     State state = State(n_snakes, n_apples, board_width, board_height);
     Agent agent = Agent();
 
-    // if Python is to begin
-    // send_serialized_state(&state, &serializer, client_socket);
-    if (is_cpp_allowed_to_move_first == 0){
-        send_serialized_state(&state, &serializer, client_socket);
-        is_cpp_turn = false;
-    }
+    // cpp always begin
+    bool is_cpp_turn = true;
 
-
-
-    // 0 is python snake, 1 is cpp
+    // since python is moving as the second one, its index is 1
+    // cpp - 0 & python - 1
     while (true)
     {   
         cout << "C++'s turn" << endl;
 
         if (is_cpp_turn == true){
-            char direction = agent.bfs_based_agent(state, 1);
-            state.move(direction, 1);
+            char direction = agent.bfs_based_agent(state, 0);
+            state.move(direction, 0);
             
 
             send_serialized_state(&state, &serializer, client_socket);
@@ -232,9 +217,11 @@ int main() {
                 break;
             }
 
+            cout << "before" << endl;
             // get new apples positions if Python side ate it xd
-            if (state.n_apples < 5){
+            if (state.n_apples != state.apples.size()){
                 state.get_apples_positions(state.apples);
+                cout << "After" << endl;
             }
         }
     }

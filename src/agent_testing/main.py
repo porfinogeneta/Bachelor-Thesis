@@ -2,8 +2,8 @@ import socket
 import threading
 import json
 import time
-from serializer import Serializer
-from game_visualizer import GameVisualizer
+from src.snake_game.serializer import Serializer
+from src.snake_game.game_visualizer import GameVisualizer
 
 # leftover_data = ""
 def receive_complete_json(sock):
@@ -17,7 +17,6 @@ def receive_complete_json(sock):
     
     while True:
         chunk = sock.recv(1024).decode('utf-8')
-
         if chunk == "":
             return None
 
@@ -65,30 +64,29 @@ if __name__ == "__main__":
         
         
         if is_python_turn:
-            if state.whoose_prev_turn == "cpp":
-                if state.is_game_over():
-                    print("Python won")
-                    break
-                
-                print("Python's turn...")            
-                
-                # Make move and update state
-                direction = input("provide move: ").upper()
-                state.move(direction=direction, snake_moving_idx=0)
+            if state.is_game_over():
+                print("Python won")
+                break
+            
+            print("Python's turn...")            
+            
+            # Make move and update state
+            direction = input("provide move: ").upper()
+            state.move(direction=direction, snake_moving_idx=1)
 
-                # visualize
-                visualizer.visualize_state(state)
-                
-                # Send updated state back to C++ server
-                serialized_state = Serializer.serialize_state(state)
-                print("Sending:", serialized_state)
-                client_socket.sendall(serialized_state.encode('utf-8'))
-                is_python_turn = False
+            # visualize
+            visualizer.visualize_state(state)
+            
+            # Send updated state back to C++ server
+            serialized_state = Serializer.serialize_state(state)
+            print("Sending:", serialized_state)
+            client_socket.sendall(serialized_state.encode('utf-8'))
+            is_python_turn = False
 
-                # After python move snake is dead, means cpp won
-                if state.is_game_over():
-                    print("C++ won")
-                    break
+            # After python move snake is dead, means cpp won
+            if state.is_game_over():
+                print("C++ won")
+                break
 
         else:
             print("C++'s turn...")

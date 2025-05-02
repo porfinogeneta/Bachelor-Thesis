@@ -1,6 +1,6 @@
 from typing import List
-from snake import Snake
-from apple import Apple
+from .snake import Snake
+from .apple import Apple
 import json
 
 class State:
@@ -21,10 +21,6 @@ class State:
     def is_snake_colliding_snakes(self, snake: Snake, snakes: List[Snake]) -> bool:
         moving_head = snake.head
 
-
-        print("at least eneted")
-        print(moving_head)
-        print(snake.tail)
         if moving_head in snake.tail:
             
             return True
@@ -83,7 +79,6 @@ class State:
 
         if self.is_snake_colliding_with_apple(self.snakes[snake_moving_idx], self.apples):
             self.snakes[snake_moving_idx].tail.append(new_snake_segment)
-
 
         return True
     
