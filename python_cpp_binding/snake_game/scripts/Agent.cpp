@@ -12,7 +12,7 @@ char Agent::getRandomChar() {
 
     return directions[distr(gen)];
 };
-
+// returns positions occupied by snakes and current snake's body
 set<pair<int, int> > get_positions_occupiend_by_snakes(size_t current_snake_idx, const vector<Snake>& snakes){
     
     set<pair<int, int> > snake_occupied_positions;
@@ -42,8 +42,8 @@ bool is_position_in_set(pair<int, int> position, set<pair <int, int> > positions
     return positions.find({position.first, position.second}) != positions.end();
 }
 
-bool is_position_out_of_bounds(int x, int y, int board_width, int board_height){
-    return x < 0 || x >= board_width || y < 0 || y >= board_height;
+bool is_position_out_of_bounds(pair<int, int> position, int board_width, int board_height){
+    return position.first < 0 || position.first >= board_width || position.second < 0 || position.second >= board_height;
 }
 
 // returns random pair from vector
@@ -95,7 +95,7 @@ char Agent::bfs_based_agent(
                 queue.pop();
 
                 // position already visited
-                if (is_position_in_set(current_position, visited) || is_position_out_of_bounds(current_position.first, current_position.second, state.board_width, state.board_height)){
+                if (is_position_in_set(current_position, visited) || is_position_out_of_bounds(current_position, state.board_width, state.board_height)){
                     continue;
                 }
 
@@ -134,19 +134,19 @@ char Agent::bfs_based_agent(
         if (best_distance == 10000){
             // cout << "No path to the apple found" << endl;
             // if no path to the apple is found, go in any free direction (not in snake and not out of bounds)
-            if (!is_position_in_set(make_pair(x - 1, y), snake_positions) && !is_position_out_of_bounds(x - 1, y, state.board_width, state.board_height)){
+            if (!is_position_in_set(make_pair(x - 1, y), snake_positions) && !is_position_out_of_bounds(make_pair(x - 1, y), state.board_width, state.board_height)){
                 viable_moves.push_back('U');
                 // best_dir = 'U';
             }
-            if (!is_position_in_set(make_pair(x + 1, y), snake_positions) && !is_position_out_of_bounds(x + 1, y, state.board_width, state.board_height)){
+            if (!is_position_in_set(make_pair(x + 1, y), snake_positions) && !is_position_out_of_bounds(make_pair(x + 1, y), state.board_width, state.board_height)){
                 // best_dir = 'D';
                 viable_moves.push_back('D');
             }
-            if (!is_position_in_set(make_pair(x, y - 1), snake_positions) && !is_position_out_of_bounds(x, y - 1, state.board_width, state.board_height)){
+            if (!is_position_in_set(make_pair(x, y - 1), snake_positions) && !is_position_out_of_bounds(make_pair(x, y - 1), state.board_width, state.board_height)){
                 viable_moves.push_back('L');
             //     best_dir = 'L';
             }
-            if (!is_position_in_set(make_pair(x, y + 1), snake_positions) && !is_position_out_of_bounds(x, y + 1, state.board_width, state.board_height)){
+            if (!is_position_in_set(make_pair(x, y + 1), snake_positions) && !is_position_out_of_bounds(make_pair(x, y + 1), state.board_width, state.board_height)){
                 viable_moves.push_back('R');
                 // best_dir = 'R';
             }
@@ -160,5 +160,87 @@ char Agent::bfs_based_agent(
         return chose_random_vector_element(viable_moves);
 
     }
+
+
+char Agent::random_based_agent(const State &state, int current_snake_idx) {
+
+        // this agent is based on choosing a position that is either empty or contains an apple
+        // whenever possible we choose position that won't cause the snake's suicide, i.e. is not
+        // in any of the snakes bodies and is not out of bounds, we favour positions with apples,
+        // we increase probability of a position being chosen by adding a duplicate of apple position
+
+        // get current snake position
+        int x = state.snakes[current_snake_idx].head.first;
+        int y = state.snakes[current_snake_idx].head.second;
+
+
+        set<pair <int, int> > apples_positions = get_positions_occupied_by_apples(state.apples);
+        set<pair <int, int> > snake_positions = get_positions_occupiend_by_snakes(current_snake_idx, state.snakes);
+
+        // possible positions, from them we sample
+        vector<char> viable_normal_moves;
+        vector<char> viable_apple_moves;
+
+        // create viable moves, greedy approach of always choosing position with an apple and free position
+        // if nothing is available, greedy approach ensures shorter games, since snakes grow quicker
+        pair<int, int> current_snake_head = state.snakes[current_snake_idx].head;
+        // UP
+        pair<int, int> up_pair = make_pair(current_snake_head.first - 1, current_snake_head.second);
+        if (!is_position_in_set(up_pair, snake_positions) && !is_position_out_of_bounds(up_pair, state.board_width, state.board_height)){
+            if (is_position_in_set(up_pair, apples_positions)){
+                viable_apple_moves.push_back('U');
+            }else
+                viable_normal_moves.push_back('U');
+        }
+
+        // DOWN
+        pair<int, int> down_pair = make_pair(current_snake_head.first + 1, current_snake_head.second);
+        if (!is_position_in_set(down_pair, snake_positions) && !is_position_out_of_bounds(down_pair, state.board_width, state.board_height)){
+            if (is_position_in_set(down_pair, apples_positions)){
+                viable_apple_moves.push_back('D');
+            }else
+                viable_normal_moves.push_back('D');
+        }
+
+        // LEFT
+        pair<int, int> left_pair = make_pair(current_snake_head.first, current_snake_head.second - 1);
+        if (!is_position_in_set(left_pair, snake_positions) && !is_position_out_of_bounds(left_pair, state.board_width, state.board_height)){
+            if (is_position_in_set(left_pair, apples_positions)){
+                viable_apple_moves.push_back('L');
+            }else
+                viable_normal_moves.push_back('L');
+        }
+
+        // RIGHT
+        pair<int, int> right_pair = make_pair(current_snake_head.first, current_snake_head.second + 1);
+        if (!is_position_in_set(right_pair, snake_positions) && !is_position_out_of_bounds(right_pair, state.board_width, state.board_height)){
+            if (is_position_in_set(right_pair, apples_positions)){
+                viable_apple_moves.push_back('R');
+            }else
+                viable_normal_moves.push_back('R');
+        }
+
+
+        // leave only apple positions if present, otherwise leave only free positions
+        // otherwise return random move
+        vector<char> viable_moves;
+
+        if (viable_apple_moves.empty()){
+            if (viable_normal_moves.empty()){
+                viable_moves.push_back(getRandomChar());
+            }else {
+                viable_moves = viable_normal_moves;
+            }
+        }else {
+            viable_moves = viable_apple_moves;
+        }
+
+
+
+    // randomy sample move
+    return chose_random_vector_element(viable_moves);
+
+}
+
     
     

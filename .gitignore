@@ -9,9 +9,9 @@ Icon
 # Thumbnails
 ._*
 
-# Big files
-*.txt
-*.json
+# # Big files
+# *.txt
+# *.json
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
@@ -98,3 +98,10 @@ venv.bak/
 *.iml
 *.iws
 *.ipr
+
+
+
+# *.bin
+# # *.pkl
+# # *.pt
+*.pyc

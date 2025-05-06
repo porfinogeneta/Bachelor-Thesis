@@ -57,7 +57,8 @@ PYBIND11_MODULE(snake_lib, m) {
     // Binding for the Agent class
     py::class_<Agent>(m, "Agent")
         .def(py::init<>(), "Construct an Agent object")
-        .def("bfs_based_agent", &Agent::bfs_based_agent, "Get move based on BFS algorithm");
+        .def("bfs_based_agent", &Agent::bfs_based_agent, "Get move based on BFS algorithm")
+        .def("random_based_agent", &Agent::random_based_agent, "Get move based on Random algorithm");
 
     // // You can also expose free functions like 'add' if needed
     // m.def("add", &add, "A function that adds two numbers");

@@ -1,3 +1,6 @@
+from typing import List
+import numpy as np
+import matplotlib.pyplot as plt
 
 class CorporaCreator:
     """
@@ -5,14 +8,13 @@ class CorporaCreator:
         cpp scipt into LLM friendly format that could be utilized for training.
     """
 
-    def __init__(self, delimeter: str, path_to_raw_data: str, output_path: str):
-        self.games = self.load_raw_data(delimeter, path_to_raw_data)
-        self.output_path = output_path
-
+    def __init__(self):
+        pass
         # print(self.games[1])
     
     def load_raw_data(self, delimeter: str, path_to_raw_data: str):
-        
+
+       
         games = []
 
         with open(path_to_raw_data, 'r') as file:
@@ -121,12 +123,71 @@ class CorporaCreator:
         return games
 
 
+    def get_statistics(self, corpora_folder: str):
+
+        games = []
+        # each game is written in a separate line
+        corpora_path = corpora_folder + "standard_positions20k.txt"
+        with open(corpora_path, 'r') as file:
+            [games.append(line) for line in file]
+        
+        # remove any empty games that might result from splitting
+        games = [game.strip() for game in games if game.strip()]
+
+        # calcualte tokens amount, tokenization is on split
+        token_counts = [len(game.split()) for game in games]
+        
+        # Calculate statistics
+        stats = {
+            "total_games": len(games),
+            "token-wize": {
+                "min": min(token_counts),
+                "max": max(token_counts),
+                "mean": np.mean(token_counts),
+                "median": np.median(token_counts),
+                "p90": np.percentile(token_counts, 90),
+            }
+        }
+        
+        # Create histograms
+        fig, ax1 = plt.subplots(1, 1, figsize=(15, 5))
+        
+        
+        # Tokens histogram
+        ax1.hist(token_counts, bins=30, alpha=0.7, color='green')
+        ax1.set_title('Game Length Distribution (by tokens)')
+        ax1.set_xlabel('Number of Tokens')
+        ax1.set_ylabel('Frequency')
+        ax1.axvline(stats["token-wize"]["median"], color='r', linestyle='dashed', linewidth=1, label=f'Median: {stats["token-wize"]["median"]:.1f}')
+        ax1.axvline(stats["token-wize"]["p90"], color='g', linestyle='dashed', linewidth=1, label=f'90th %: {stats["token-wize"]["p90"]:.1f}')
+        ax1.legend()
+        
+        plt.tight_layout()
+        plt.savefig(corpora_folder + 'game_length_distribution.png')
+        plt.show()
 
 
-    def parse_position(self):
+        stats_file = "standard_positions20k_stats.txt"
+        with open(corpora_folder + stats_file, 'w') as file:
+            token_stats = stats['token-wize']
+            file.write(f"Total Games: {stats['total_games']}\n"
+                    f"Max Game Length: {token_stats['max']}\n"
+                    f"Min Game Length: {token_stats['min']}\n"
+                    f"Average Game Length: {token_stats['mean']}\n"
+                    f"Median Game Length: {token_stats['median']}\n"
+                    f"90th percentile: {token_stats['p90']}\n")
+    
+    def parse_position(self, delimeter: str, path_to_raw_data: str, output_folder: str):
         """
             Creates a corpora like:
         """
+
+        self.games = self.load_raw_data(delimeter, path_to_raw_data)
+        self.output_folder = output_folder
+
+        
+
+
         corpora = []
         for game in self.games:
 
@@ -206,24 +267,33 @@ class CorporaCreator:
 
             corpora.append(corp_line.strip() + ' <END> <ENDGAME>\n')
 
-        # print(len(corpora))
-        with open(self.output_path, 'w') as file:
+        output_file = "standard_positions20k.txt"
+        # clear the file and add data
+        with open(self.output_folder + output_file, 'w') as file:
             for game_line in corpora:
                 file.write(game_line) 
-        # print("turns:", TURNS)
-        # print("moves", len(SNAKES[0]["positions"] + SNAKES[1]["positions"]))
-        # print("apples:", len(APPLES))
-        # print(corpora)
 
 
 
+        # # create stats for this corpora
+        # stats_file = "standard_positions20k_stats.txt"
+        # with open(self.output_folder + stats_file, 'w') as file:
+        #     file.write(f"Total Games: {len(corpora)}\n")
+        #     file.write(f"Max Game Length: {max(len(line.split()) for line in corpora)}\n")
+        #     file.write(f"Min Game Length: {min(len(line.split()) for line in corpora)}\n")
+        #     file.write(f"Average Game Length: {sum([len(line.split()) for line in corpora]) // len(corpora)}\n")
+        #     file.write(f"Median Game Length: {self.__find_median(corpora)}\n")
+        #     average_turns = sum([game["turns"] for game in self.games]) // len(self.games)
+        #     file.write(f"Average Turns {average_turns}")
 
 
 
 if __name__ == "__main__":
-    creator = CorporaCreator("==================================================",
-                            "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/raw/raw_state_history20k.txt",
-                            "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
-                            )
+    creator = CorporaCreator()
 
-    creator.parse_position()
+    # creator.parse_position("==================================================",
+    #                         "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/raw/raw_state_history20k.txt",
+    #                         "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/")
+    
+    creator.get_statistics(corpora_folder="/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/")
+
