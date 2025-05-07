@@ -16,7 +16,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 
-from training.nanoGPT.tokenizer.tokenizer import Tokenizer
+from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
 
 tokenizer = Tokenizer()
 

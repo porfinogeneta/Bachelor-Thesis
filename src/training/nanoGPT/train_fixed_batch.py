@@ -131,6 +131,10 @@ def get_batch(split):
         print(f"Warning: Only {len(valid_indices)} valid start positions found. Need {batch_size}.")
 
     selected_indices = random.sample(valid_indices, min(batch_size, len(valid_indices)))
+    print(selected_indices)
+    # selected_indices = np.random.choice(valid_indices, len(valid_indices))
+
+    # selected_indices = torch.randint()
 
     x = torch.stack([torch.from_numpy((data[i:i+block_size]).astype(np.int64)) for i in selected_indices])
     y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size]).astype(np.int64)) for i in selected_indices])

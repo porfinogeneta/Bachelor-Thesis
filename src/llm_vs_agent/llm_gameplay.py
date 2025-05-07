@@ -1,5 +1,5 @@
 
-from src.snake_game.game_visualizer import GameVisualizer
+from llm_vs_agent.game_visualizer import GameVisualizer
 import subprocess
 import os
 import re
@@ -8,7 +8,7 @@ import random
 import sys
 import os
 # visualizer
-from src.snake_game.game_visualizer import GameVisualizer
+# from src.snake_game.game_visualizer import GameVisualizer
 
 # llm caller
 from src.llm_vs_agent.llm_caller import LLMCaller
@@ -19,7 +19,8 @@ from src.logger.logger import setup_logger
 logger = setup_logger(__name__)
 
 # cpp code
-module_path = '/Users/szymon/Documents/Bachelor-Thesis/cpp/python_cpp_binding/'
+# module_path = '/Users/szymon/Documents/Bachelor-Thesis/cpp/python_cpp_binding/'
+module_path = "/home/ubuntu/Bachelor-Thesis/python_cpp_binding/"
 
 sys.path.append(module_path)
 import snake_lib

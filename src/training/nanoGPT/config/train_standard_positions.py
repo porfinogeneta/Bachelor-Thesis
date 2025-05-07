@@ -18,8 +18,8 @@ gradient_accumulation_steps = 1
 # 64 256
 # batch_size = 32
 # block_size = 256 # context of up to 2816 previous characters
-batch_size = 2
-block_size = 1024 # context of up to 2816 previous characters
+batch_size = 64
+block_size = 2866 # context of up to 2816 previous characters
 
 # baby GPT model :)
 n_layer = 6
@@ -36,5 +36,5 @@ beta2 = 0.99 # make a bit bigger because number of tokens per iter is small
 warmup_iters = 100 # not super necessary potentially
 
 # on macbook also add
-device = 'mps'  # run on cpu only
-compile = False # do not torch compile the model
+# device = 'mps'  # run on cpu only
+# compile = False # do not torch compile the model
