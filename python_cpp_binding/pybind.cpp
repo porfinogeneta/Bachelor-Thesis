@@ -51,8 +51,9 @@ PYBIND11_MODULE(snake_lib, m) {
         .def("is_snake_colliding_snakes", &State::is_snake_colliding_snakes, "Check for snake-snake collision")
         .def("is_snake_out_of_bounds", &State::is_snake_out_of_bounds, "Check if snake is out of bounds")
         .def("is_snake_apple_colliding", &State::is_snake_apple_colliding, "Check for snake-apple collision")
-        .def("print_game_state", &State::print_game_state, "Print the current game state")
-        .def("get_full_history", &State::get_full_history, "Get the full game history");
+        .def("get_game_state", &State::get_game_state, "Return string with the current game state")
+        .def("get_full_history", &State::get_full_history, "Get the full game history")
+        .def("try_move", &State::try_move, "Returns True if the move is valid");
 
     // Binding for the Agent class
     py::class_<Agent>(m, "Agent")

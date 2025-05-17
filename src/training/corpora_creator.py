@@ -123,11 +123,11 @@ class CorporaCreator:
         return games
 
 
-    def get_statistics(self, corpora_folder: str):
+    def get_statistics(self, corpora_folder: str, stats_of_filename: str):
 
         games = []
         # each game is written in a separate line
-        corpora_path = corpora_folder + "standard_positions20k.txt"
+        corpora_path = corpora_folder + stats_of_filename
         with open(corpora_path, 'r') as file:
             [games.append(line) for line in file]
         
@@ -163,11 +163,11 @@ class CorporaCreator:
         ax1.legend()
         
         plt.tight_layout()
-        plt.savefig(corpora_folder + 'game_length_distribution.png')
+        plt.savefig(corpora_folder + f'{stats_of_filename}_game_length_distr.png')
         plt.show()
 
 
-        stats_file = "standard_positions20k_stats.txt"
+        stats_file = f"{stats_of_filename}_stats.txt"
         with open(corpora_folder + stats_file, 'w') as file:
             token_stats = stats['token-wize']
             file.write(f"Total Games: {stats['total_games']}\n"
@@ -177,7 +177,7 @@ class CorporaCreator:
                     f"Median Game Length: {token_stats['median']}\n"
                     f"90th percentile: {token_stats['p90']}\n")
     
-    def parse_position(self, delimeter: str, path_to_raw_data: str, output_folder: str):
+    def create_standard_position_corpora(self, delimeter: str, path_to_raw_data: str, output_filename: str, output_folder: str):
         """
             Creates a corpora like:
         """
@@ -227,7 +227,7 @@ class CorporaCreator:
             corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i]["positions"]])
             corp_line += " "
 
-            apple_i += 1
+            apple_i = 1
 
             # TURNS + 1 since last turn is also imporant (has a move that resulted in death of the other snake)
             for turn in range(1, TURNS+1):
@@ -245,7 +245,9 @@ class CorporaCreator:
 
                         si[0] += 1
                     else:
-                        corp_line += f'S0 <DEAD>'
+                        corp_line += f'S0 <DEAD> L{SNAKES[0]["tail_lengths"][-1]} '
+                        corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i-1]["positions"]])
+
                 # 1st snake if move exists
                 elif (turn-1) % 2 == 1:
                     if si[1] < len(SNAKES[1]["positions"]):
@@ -261,39 +263,26 @@ class CorporaCreator:
 
                         si[1] += 1
                     else:
-                        corp_line += f'S1 <DEAD>'
+                        corp_line += f'S1 <DEAD> L{SNAKES[1]["tail_lengths"][-1]} '
+                        corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i-1]["positions"]])
                 
                 corp_line += " "
 
             corpora.append(corp_line.strip() + ' <END> <ENDGAME>\n')
 
-        output_file = "standard_positions20k.txt"
         # clear the file and add data
-        with open(self.output_folder + output_file, 'w') as file:
+        with open(self.output_folder + output_filename, 'w') as file:
             for game_line in corpora:
                 file.write(game_line) 
-
-
-
-        # # create stats for this corpora
-        # stats_file = "standard_positions20k_stats.txt"
-        # with open(self.output_folder + stats_file, 'w') as file:
-        #     file.write(f"Total Games: {len(corpora)}\n")
-        #     file.write(f"Max Game Length: {max(len(line.split()) for line in corpora)}\n")
-        #     file.write(f"Min Game Length: {min(len(line.split()) for line in corpora)}\n")
-        #     file.write(f"Average Game Length: {sum([len(line.split()) for line in corpora]) // len(corpora)}\n")
-        #     file.write(f"Median Game Length: {self.__find_median(corpora)}\n")
-        #     average_turns = sum([game["turns"] for game in self.games]) // len(self.games)
-        #     file.write(f"Average Turns {average_turns}")
-
 
 
 if __name__ == "__main__":
     creator = CorporaCreator()
 
-    # creator.parse_position("==================================================",
-    #                         "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/raw/raw_state_history20k.txt",
+    # creator.create_standard_position_corpora("==================================================",
+    #                         "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/raw/raw_state_history20kp.txt",
+    #                         "standard_positions20kp.txt",
     #                         "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/")
     
-    creator.get_statistics(corpora_folder="/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/")
+    creator.get_statistics(corpora_folder="/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/", stats_of_filename="standard_positions20kp.txt")
 

@@ -51,7 +51,7 @@ State::State(int n_snakes, int n_apples, int board_width, int board_height) {
 // }
 
 
-// void State::set_cout(const std::string& filename) {
+// void State::set_cout(const string& filename) {
 //     if (cout.is_open()) {
 //         cout.close();
 //     }
@@ -175,6 +175,43 @@ bool State::is_snake_colliding_snakes(Snake& snake_moving, vector<Snake>& snakes
     return false;
 }
 
+
+bool State::is_snake_colliding_snakes_no_state_change(Snake& tried_snake, Snake& snake_in_state_moving, vector<Snake>& snakes){
+    // function checks for collisions with the snake that don't modify the state
+
+    pair<int, int> moving_head = tried_snake.head;
+
+    // head collision with the snake itself
+    for (const auto& tail_segment : tried_snake.tail) {
+        if (moving_head == tail_segment) {
+            return true;
+        }
+    }
+
+    for (const Snake& other_snake: snakes){
+        
+        if (&snake_in_state_moving == &other_snake) {
+            continue;
+        }
+
+        // head collision with another snake's head
+        if (moving_head == other_snake.head) {
+            return true;
+        }
+
+        // collision with tail segment from the other snake
+        for (const auto& tail_segment : other_snake.tail) {
+            if (moving_head == tail_segment) {
+                return true;
+            }
+        }
+        
+        
+    }
+
+    return false;
+}
+
 bool State::is_snake_out_of_bounds(Snake& snake_moving){
     pair<int, int> moving_head = snake_moving.head;
 
@@ -193,6 +230,15 @@ int State::is_snake_apple_colliding(Snake& snake_moving, vector<Apple>& apples){
         }
     }
     return -1;
+}
+
+
+// returns True on valid move
+bool State::try_move(char direction, Snake& tested_snake){
+    Snake cpy = tested_snake;
+
+    cpy.move_snake(direction);
+    return !is_snake_colliding_snakes_no_state_change(cpy, tested_snake, snakes) && !is_snake_out_of_bounds(cpy);
 }
 
 // returns true if snake moved successfully
@@ -222,12 +268,14 @@ bool State::move(char direction, int snake_moving_idx){
 
     // add new position to the snake moves history
     snakes[snake_moving_idx].moves_history.push_back(snakes[snake_moving_idx].head);
-    // add tail length to history
-    snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
+    
 
     if (is_snake_colliding_snakes(snakes[snake_moving_idx], snakes) || 
         is_snake_out_of_bounds(snakes[snake_moving_idx]) || 
         (snakes[snake_moving_idx].head == new_snake_segment && snakes[snake_moving_idx].tail.size() == 1)) {
+
+        // add tail length to history 
+        snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
         
         eliminated_snakes.insert(snake_moving_idx);
         // after the move, update apples history
@@ -246,7 +294,7 @@ bool State::move(char direction, int snake_moving_idx){
         // cout << "eating" << endl;
         // add new segment to the snake
         snakes[snake_moving_idx].tail.push_back(new_snake_segment);
-
+        
         // delete apple after colliding
         apples.erase(apples.begin() + apple_eaten_idx);
         // function generates new apple position that's not on the snake or on one of the apples
@@ -255,6 +303,9 @@ bool State::move(char direction, int snake_moving_idx){
 
     // after the move update apples history
     apples_history.push_back(apples);
+
+    // after the move add tail length to history - we are interested in lengths after the move 
+    snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
 
     turn++;
 
@@ -274,53 +325,154 @@ bool State::is_game_over() {
 }
 
 
-void State::get_full_history(){
+string State::get_full_history() {
+    string result;
 
+
+    result += "==================================================\n";
+    
     // turns amount
-    cout << "Turns " << turn << endl;
-
+    result += "Turns " + to_string(turn) + "\n";
+    
     // snake positions information
     for (size_t i = 0; i < snakes.size(); i++) {
         const Snake& snake = snakes[i];
-        cout << "Length: " << snake.tail.size() + 1 << endl;
+        result += "Length: " + to_string(snake.tail.size() + 1) + "\n";
         
         // print movement history
-        cout << "Snake " << i << endl;
+        result += "Snake " + to_string(i) + "\n";
         for (const auto& position : snake.moves_history) {
-            cout << "(" << position.first << "," << position.second << ") ";
+            result += "(" + to_string(position.first) + "," + to_string(position.second) + ") ";
         }
-        cout << endl;
-
+        result += "\n";
+        
         // print tail sizes history
-        cout << "Tail Snake" << i << endl;
+        result += "Tail Snake" + to_string(i) + "\n";
         for (const auto& size : snake.tails_len_history) {
-            cout << size << " ";
+            result += to_string(size) + " ";
         }
-
-        cout << endl;
+        result += "\n";
     }
-
-    cout << "Apples" << endl;
+    
+    result += "Apples\n";
     int apple_vec_index = 0;
-    for (const auto& apple_vec : apples_history){
-        for (const auto& apple : apple_vec){
-            cout << "(" << apple.position.first << "," << apple.position.second << ") ";
+    for (const auto& apple_vec : apples_history) {
+        for (const auto& apple : apple_vec) {
+            result += "(" + to_string(apple.position.first) + "," + to_string(apple.position.second) + ") ";
         }
-
-        cout << apple_vec_index << endl;
+        result += to_string(apple_vec_index) + "\n";
         apple_vec_index++;
     }
+    
+    return result;
 }
 
 
-void State::print_game_state() {
+// void State::print_game_state() {
 
+//     // empty board representation
+//     vector<vector<char>> board(board_height, vector<char>(board_width, '.'));
+    
+//     // place apples
+//     for (const auto& apple : apples) {
+//         if (apple.position.first >= 0 && apple.position.first < board_height && 
+//             apple.position.second >= 0 && apple.position.second < board_width) {
+//             board[apple.position.first][apple.position.second] = 'A';
+//         }
+//     }
+    
+//     // place snakes
+//     for (size_t i = 0; i < snakes.size(); i++) {
+//         const Snake& snake = snakes[i];
+        
+//         // place tail segments
+//         for (const auto& segment : snake.tail) {
+//             if (segment.first >= 0 && segment.first < board_height && 
+//                 segment.second >= 0 && segment.second < board_width) {
+//                 board[segment.first][segment.second] = '0' + i;
+//             }
+//         }
+        
+//         // Place snake head (using different character for head)
+//         if (snake.head.first >= 0 && snake.head.first < board_height && 
+//             snake.head.second >= 0 && snake.head.second < board_width) {
+//             board[snake.head.first][snake.head.second] = 'H';
+//         }
+//     }
+    
+
+
+//     if (turn == 0) {
+//         cout << "========== Game Start ==========" << endl;
+//     }else {
+//         pair<int, int> curr_move = snakes[(turn-1) % n_snakes].moves_history.back();
+//         pair<int, int> prev_move;
+//         if (snakes.size() == 1) {
+//             prev_move = curr_move;
+//         }else {
+//             prev_move = snakes[(turn-1) % n_snakes].moves_history[snakes[(turn-1) % n_snakes].moves_history.size() - 2];
+//         }
+//         cout << "========== Turn " << turn << " - Snake " << turn % n_snakes \
+//         << " | Snake" << (turn-1) % n_snakes << " " <<  "(" << prev_move.first << "," << prev_move.second << ")" \
+//         << " -> " << "(" << curr_move.first << "," << curr_move.second << ")" << " ==========" << endl;
+//     }
+//     cout << "+";
+//     for (int j = 0; j < board_width; j++) {
+//         cout << "-";
+//     }
+//     cout << "+" << endl;
+    
+//     for (int i = 0; i < board_height; i++) {
+//         cout << "|";
+//         for (int j = 0; j < board_width; j++) {
+//             cout << board[i][j];
+//         }
+//         cout << "|" << endl;
+//     }
+    
+//     cout << "+";
+//     for (int j = 0; j < board_width; j++) {
+//         cout << "-";
+//     }
+//     cout << "+" << endl;
+    
+//     // snake positions information
+//     for (size_t i = 0; i < snakes.size(); i++) {
+//         const Snake& snake = snakes[i];
+//         if (eliminated_snakes.find(i) != eliminated_snakes.end()) {
+//             cout << "(dead) Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
+//         }else {
+//             cout << "Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
+
+//         }
+//         cout << "Length: " << snake.tail.size() + 1 << endl;
+        
+//         // print movement history
+//         cout << "  Movement history: ";
+//         for (const auto& position : snake.moves_history) {
+//             cout << "(" << position.first << "," << position.second << ") ";
+//         }
+//         cout << endl;
+//     }
+
+//     // print apple positions
+//     cout << "Apples: ";
+//     for (size_t i = 0; i < apples.size(); i++) {
+//         cout << "(" << apples[i].position.first << "," << apples[i].position.second << ") ";
+//     }
+//     cout << endl << endl;
+    
+// }
+
+string State::get_game_state() {
+    string result;
+    
     // empty board representation
     vector<vector<char>> board(board_height, vector<char>(board_width, '.'));
     
     // place apples
     for (const auto& apple : apples) {
-        if (apple.position.first >= 0 && apple.position.first < board_height && 
+        if (apple.position.first >= 0 && apple.position.first < board_height &&
             apple.position.second >= 0 && apple.position.second < board_width) {
             board[apple.position.first][apple.position.second] = 'A';
         }
@@ -329,82 +481,79 @@ void State::print_game_state() {
     // place snakes
     for (size_t i = 0; i < snakes.size(); i++) {
         const Snake& snake = snakes[i];
-        
         // place tail segments
         for (const auto& segment : snake.tail) {
-            if (segment.first >= 0 && segment.first < board_height && 
+            if (segment.first >= 0 && segment.first < board_height &&
                 segment.second >= 0 && segment.second < board_width) {
                 board[segment.first][segment.second] = '0' + i;
             }
         }
-        
         // Place snake head (using different character for head)
-        if (snake.head.first >= 0 && snake.head.first < board_height && 
+        if (snake.head.first >= 0 && snake.head.first < board_height &&
             snake.head.second >= 0 && snake.head.second < board_width) {
             board[snake.head.first][snake.head.second] = 'H';
         }
     }
     
-
-
     if (turn == 0) {
-        cout << "========== Game Start ==========" << endl;
-    }else {
+        result += "========== Game Start ==========\n";
+    } else {
         pair<int, int> curr_move = snakes[(turn-1) % n_snakes].moves_history.back();
         pair<int, int> prev_move;
         if (snakes.size() == 1) {
             prev_move = curr_move;
-        }else {
+        } else {
             prev_move = snakes[(turn-1) % n_snakes].moves_history[snakes[(turn-1) % n_snakes].moves_history.size() - 2];
         }
-        cout << "========== Turn " << turn << " - Snake " << turn % n_snakes \
-        << " | Snake" << (turn-1) % n_snakes << " " <<  "(" << prev_move.first << "," << prev_move.second << ")" \
-        << " -> " << "(" << curr_move.first << "," << curr_move.second << ")" << " ==========" << endl;
+        result += "========== Turn " + to_string(turn) + " - Snake " + to_string(turn % n_snakes) 
+               + " | Snake" + to_string((turn-1) % n_snakes) + " " + "(" + to_string(prev_move.first) + "," + to_string(prev_move.second) + ")" 
+               + " -> " + "(" + to_string(curr_move.first) + "," + to_string(curr_move.second) + ")" + " ==========\n";
     }
-    cout << "+";
+    
+    result += "+";
     for (int j = 0; j < board_width; j++) {
-        cout << "-";
+        result += "-";
     }
-    cout << "+" << endl;
+    result += "+\n";
     
     for (int i = 0; i < board_height; i++) {
-        cout << "|";
+        result += "|";
         for (int j = 0; j < board_width; j++) {
-            cout << board[i][j];
+            result += board[i][j];
         }
-        cout << "|" << endl;
+        result += "|\n";
     }
     
-    cout << "+";
+    result += "+";
     for (int j = 0; j < board_width; j++) {
-        cout << "-";
+        result += "-";
     }
-    cout << "+" << endl;
+    result += "+\n";
     
     // snake positions information
     for (size_t i = 0; i < snakes.size(); i++) {
         const Snake& snake = snakes[i];
         if (eliminated_snakes.find(i) != eliminated_snakes.end()) {
-            cout << "(dead) Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
-        }else {
-            cout << "Snake " << i << ": Head at (" << snake.head.first << "," << snake.head.second << "), ";
-
+            result += "(dead) Snake " + to_string(i) + ": Head at (" + to_string(snake.head.first) + "," + to_string(snake.head.second) + "), ";
+        } else {
+            result += "Snake " + to_string(i) + ": Head at (" + to_string(snake.head.first) + "," + to_string(snake.head.second) + "), ";
         }
-        cout << "Length: " << snake.tail.size() + 1 << endl;
+        result += "Length: " + to_string(snake.tail.size() + 1) + "\n";
         
         // print movement history
-        cout << "  Movement history: ";
+        result += " Movement history: ";
         for (const auto& position : snake.moves_history) {
-            cout << "(" << position.first << "," << position.second << ") ";
+            result += "(" + to_string(position.first) + "," + to_string(position.second) + ") ";
         }
-        cout << endl;
+        result += "\n";
     }
-
-    // print apple positions
-    cout << "Apples: ";
-    for (size_t i = 0; i < apples.size(); i++) {
-        cout << "(" << apples[i].position.first << "," << apples[i].position.second << ") ";
-    }
-    cout << endl << endl;
     
+    // print apple positions
+    result += "Apples: ";
+    for (size_t i = 0; i < apples.size(); i++) {
+        result += "(" + to_string(apples[i].position.first) + "," + to_string(apples[i].position.second) + ") ";
+    }
+    result += "\n\n";
+    
+    return result;
 }

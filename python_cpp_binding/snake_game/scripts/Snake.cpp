@@ -25,7 +25,6 @@ pair<int, int> Snake::get_move(char move) {
 
 void Snake::move_snake(char direction){
     pair<int, int> move_pair = get_move(direction);
-    // cout << move_pair.first << endl;
     pair<int, int> head_cpy = head;
 
     head.first += move_pair.first;
@@ -37,8 +36,6 @@ void Snake::move_snake(char direction){
         // at the beginning of the tail insert the head
         tail.insert(tail.begin(), head_cpy);
     }
-
-    // cout << head.first << endl;
 }
 
 pair<int, int> Snake::get_last_snake_segment(){

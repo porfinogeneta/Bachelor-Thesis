@@ -9,6 +9,7 @@ import sys
 import os
 # visualizer
 # from src.snake_game.game_visualizer import GameVisualizer
+from src.llm_vs_agent.game_visualizer import GameVisualizer
 
 # llm caller
 from src.llm_vs_agent.llm_caller import LLMCaller
@@ -19,8 +20,8 @@ from src.logger.logger import setup_logger
 logger = setup_logger(__name__)
 
 # cpp code
-# module_path = '/Users/szymon/Documents/Bachelor-Thesis/cpp/python_cpp_binding/'
-module_path = "/home/ubuntu/Bachelor-Thesis/python_cpp_binding/"
+module_path = '/Users/szymon/Documents/Bachelor-Thesis/python_cpp_binding/'
+# module_path = "/home/ubuntu/Bachelor-Thesis/python_cpp_binding/"
 
 sys.path.append(module_path)
 import snake_lib
@@ -35,7 +36,7 @@ n_apples = 5
 board_width = 10
 board_height = 10
 
-def main(model: str, agent_type: str = "random_agent"):
+def main(model_name: str, agent_type: str = "random_agent"):
     """
     Runs the snake game simulation using the C++ classes exposed via pybind11 and language model.
 
@@ -52,7 +53,7 @@ def main(model: str, agent_type: str = "random_agent"):
     
 
     # llm caller
-    caller = LLMCaller()
+    caller = LLMCaller(model_name=model_name)
 
     game_sequence = "<START> "
    
@@ -60,46 +61,46 @@ def main(model: str, agent_type: str = "random_agent"):
     state = snake_lib.State(n_snakes, n_apples, board_width, board_height)
     agent = snake_lib.Agent()
 
+    # MODEL_IDX = random.choice([0, 1])
+    # AGENT_IDX = 1 if MODEL_IDX == 0 else 0
+    MODEL_IDX = 0
+    AGENT_IDX = 1
+
     # initialize both snakes
     game_sequence += f"S0 R{state.snakes[0].moves_history[0][0]}C{state.snakes[0].moves_history[0][1]} L{len(state.snakes[0].tail)} "
     game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
     game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
     game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
+
+
     # counter of improper moves generation of a model
     improper_genenerations_cnt = 0
 
-    visualize = False
+    # visualize = False
 
     if visualize:
         # game visualizer
-        visualizer = GameVisualizer()
+        visualizer = GameVisualizer(model_idx=MODEL_IDX)
+
+    
 
     while not state.is_game_over():
 
         if visualize:
             visualizer.visualize_state(state)
 
-        # # 193 is average gameplay time in turns in our corpora, probably a good estimation of turns
-        # # since 20k games were played
-        # if state.turn == 193:
-        #     # agent is snake 0
-        #     if len(state.snakes[0].tail) > len(state.snakes[1].tail):
-        #         return improper_genenerations_cnt, "agent", state
-        #     else:
-        #         return improper_genenerations_cnt, "llm", state
-
         # agent's snake is longer and llm's is dead, no point of further gameplay
-        if len(state.snakes[0].tail) > len(state.snakes[1].tail) and (1 in state.eliminated_snakes):
+        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
             return improper_genenerations_cnt, "agent", state
         # llm's is longer and agent's is dead
-        elif len(state.snakes[1].tail) > len(state.snakes[0].tail) and (0 in state.eliminated_snakes):
-            return improper_genenerations_cnt, "agent", state
+        elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
+            return improper_genenerations_cnt, "model", state
             
         # python is snake 1
         snake_moving_idx = state.turn % n_snakes
 
-        if snake_moving_idx == 1:
+        if snake_moving_idx == MODEL_IDX:
 
             # print("Python turn")
 
@@ -108,32 +109,23 @@ def main(model: str, agent_type: str = "random_agent"):
                 state.turn += 1
                 continue
 
-            prev_head = state.snakes[1].head
+            prev_head = state.snakes[MODEL_IDX].head
 
-            move = caller.sample_next_move(prev_head=prev_head, model=model, game_sequence=f"{game_sequence}S1")
+            batch_moves, _, _ = caller.sample_next_batch_moves_from_legal_tokens(
+                prev_heads=[prev_head], 
+                game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
+                states=[state],
+                language_model_snake_idx=MODEL_IDX
+            )
+                
 
-            if not move:
-                improper_genenerations_cnt += 1
-                move = random.choice(['W', 'S', 'A', 'D'])
-                logger.error("improper move")
-            
-            # move = input("Provide move (WSAD) ").upper()
+            # logger.info(batch_moves)
 
-            # for debugging purposes we use WSAD
-            if move == "W":
-                direction = "U"
-            elif move == "A":
-                direction = "L"
-            elif move == "D":
-                direction = "R"
-            elif move == "S":
-                direction = "D"
+            # given direction move, batch_moves is a lists, hence [0]
+            state.move(batch_moves[0], snake_moving_idx)
 
-            # given direction move
-            state.move(direction, snake_moving_idx)
-
-            # add current S1 position
-            game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
+            # add current S_MODEL_IDX position
+            game_sequence += f"S{MODEL_IDX} R{state.snakes[MODEL_IDX].head[0]}C{state.snakes[MODEL_IDX].head[1]} L{len(state.snakes[MODEL_IDX].tail)} "
             game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
         else:
@@ -148,8 +140,8 @@ def main(model: str, agent_type: str = "random_agent"):
             # given direction move
             state.move(direction, snake_moving_idx)
 
-            # add current S0 position
-            game_sequence += f"S0 R{state.snakes[0].head[0]}C{state.snakes[0].head[1]} L{len(state.snakes[0].tail)} "
+            # add current S_AGENT_IDX position
+            game_sequence += f"S{AGENT_IDX} R{state.snakes[AGENT_IDX].head[0]}C{state.snakes[AGENT_IDX].head[1]} L{len(state.snakes[AGENT_IDX].tail)} "
             game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
 
@@ -158,12 +150,12 @@ def main(model: str, agent_type: str = "random_agent"):
         # print(state.snakes[1].tail)
     
     # agent is snake 0
-    if len(state.snakes[0].tail) > len(state.snakes[1].tail):
+    if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
         return improper_genenerations_cnt, "agent", state
     else:
-        return improper_genenerations_cnt, "llm", state
+        return improper_genenerations_cnt, "model", state
         
 
 
 if __name__ == "__main__":
-    main(model="out-standard_pos")
+    print(main(model_name="out-standard_pos_1774_ctx_bs_64_baby"))

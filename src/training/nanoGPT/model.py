@@ -319,7 +319,7 @@ class GPT(nn.Module):
 
 
     @torch.no_grad()
-    def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None, visualize=True):
+    def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
         """
         Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
         the sequence max_new_tokens times, feeding the predictions back into the model each time.
@@ -344,54 +344,71 @@ class GPT(nn.Module):
             # apply softmax to convert logits to (normalized) probabilities
             probs = F.softmax(logits, dim=-1)
 
-            # if visualize:
-
-            #     tokenizer = Tokenizer(10,10)
-
-            #     # Visualize the probability distribution
-            #     probs_np = probs[0].detach().cpu().numpy()
-            #     top_n = 20  # Show top 20 tokens
-            #     top_indices = np.argsort(probs_np)[-top_n:][::-1]
-            #     top_probs = probs_np[top_indices]
-                
-            #     # Get token strings - assuming your model has a tokenizer attribute
-            #     # You may need to adjust this based on how your tokenizer is accessed
-            #     top_tokens = [tokenizer.decode([idx]) for idx in top_indices]
-                
-            #     # Create visualization
-            #     plt.figure(figsize=(10, 8))
-            #     plt.barh(range(len(top_tokens)), top_probs, color='skyblue')
-            #     plt.yticks(range(len(top_tokens)), top_tokens)
-            #     plt.xlabel('Probability')
-            #     plt.title(f'Top {top_n} Token Probabilities')
-            #     plt.gca().invert_yaxis()
-            #     plt.tight_layout()
-            #     plt.grid(axis='x', linestyle='--', alpha=0.7)
-            #     plt.show()
-                
-            #     # Print probabilities
-            #     print("\nTop token probabilities:")
-            #     for token, prob in zip(top_tokens, top_probs):
-            #         print(f"{token!r}: {prob:.6f}")
-        
-
-
-            # print("probabilities", probs)
-            # print("logits", logits.size())
-
-
-            # print("tensor content")
-            # for i,elem in enumerate(lst):
-            #     if elem != 0.0:
-            #         print(elem, i)
-
-            # print(probs)
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1)
             # idx_next = torch.argmax(probs, dim=-1, keepdim=True)
 
-            # print("idx next", idx_next)
             # append sampled index to the running sequence and continue
             idx = torch.cat((idx, idx_next), dim=1)
+
+        return idx
+    
+    @torch.no_grad()
+    def generate_from_legal_tokens(self, idx, max_new_tokens, temperature=1.0, legal_tokens=None):
+        """
+        Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
+        the sequence max_new_tokens times, feeding the predictions back into the model each time.
+        Most likely you'll want to make sure to be in model.eval() mode of operation for this.
+
+        Generates only valid tokens, if no valid token is avaialble outputes 0
+        """
+
+        for _ in range(max_new_tokens):
+            # if the sequence context is growing too long we must crop it at block_size
+            idx_cond = idx if idx.size(1) <= self.config.block_size else idx[:, -self.config.block_size:]
+            # forward the model to get the logits for the index in the sequence
+            logits, _ = self(idx_cond)
+            # pluck the logits at the final step and scale by desired temperature
+            logits = logits[:, -1, :] / temperature
+
+            batch_size, _ = logits.shape
+            next_tokens = []
+
+            # function gets batches of data and each batch may have different amount
+            # of legal tokens
+            for i in range(batch_size):
+                item_logits = logits[i, :] # take ith logit whole vector
+                item_legal_tokens = legal_tokens[i]
+
+                # legal token mask for current item
+                if item_legal_tokens != []:
+                    item_legal_tokens_mask = torch.zeros_like(item_logits)
+
+                    # set up 1 for legal tokens
+                    item_legal_tokens_mask[item_legal_tokens] = 1.0
+
+                    # probability reduction for illegal tokens
+                    item_logits = item_logits.masked_fill(item_legal_tokens_mask == 0, float("-inf"))
+
+                
+                # apply softmax to convert logits to (normalized) probabilities
+                item_probs = F.softmax(item_logits, dim=-1)
+                # sample max probability token, if no tokens were legal
+                # simply return most probable in any case
+                item_idx_next = torch.argmax(item_probs, dim=-1, keepdim=True)
+                # print(item_logits.shape)
+                next_tokens.append(item_idx_next)
+
+            # [print(t.shape) for t in next_tokens]
+            # sample max from the distribution
+            idx_next = torch.cat(next_tokens, dim=0)
+            
+            # print("idx next", idx_next)
+            # append sampled index to the running sequence and continue
+
+            # print(idx.shape)
+            # print(idx_next.shape)
+            # we need to change dimensions of this vector before concatening
+            idx = torch.cat((idx, idx_next.unsqueeze(1)), dim=1)
 
         return idx

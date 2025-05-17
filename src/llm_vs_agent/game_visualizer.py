@@ -1,3 +1,8 @@
+
+
+
+
+
 import pygame
 import sys
 import json
@@ -22,7 +27,8 @@ SNAKE_COLORS = [
 ]
 
 class GameVisualizer:
-    def __init__(self, board_width=10, board_height=10, cell_size=40):
+    def __init__(self, model_idx, board_width=10, board_height=10, cell_size=40):
+        self.model_idx = model_idx
         self.board_width = board_width
         self.board_height = board_height
         self.cell_size = cell_size
@@ -116,7 +122,7 @@ class GameVisualizer:
     
     def draw_turn_info(self, turn, prev_turn):
         """Draw turn information"""
-        turn_text = f"Turn: {turn}"
+        turn_text = f"Turn: {turn}\nModel index: {self.model_idx}"
         text_surface = self.font.render(turn_text, True, BLACK)
         self.screen.blit(text_surface, (10, 30))
 
@@ -144,8 +150,11 @@ class GameVisualizer:
         
         # Draw snakes
         for i, snake in enumerate(state.snakes):
-            self.draw_snake(snake, SNAKE_COLORS[i % len(SNAKE_COLORS)])
-        
+            if i == self.model_idx:
+                self.draw_snake(snake, BLUE)
+            else:
+                 self.draw_snake(snake, GREEN)
+                 
         # Draw information
         self.draw_eliminated_info(state.eliminated_snakes)
         self.draw_turn_info(state.turn, state.whoose_prev_turn)

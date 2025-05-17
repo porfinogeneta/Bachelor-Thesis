@@ -5,6 +5,7 @@
 #include <utility>
 #include <fstream>
 #include <set>
+#include <string.h>
 #include "Snake.h"
 #include "Apple.h"
 
@@ -47,9 +48,13 @@ public:
     bool is_snake_colliding_snakes(Snake& snake_moving, vector<Snake>& snakes);
     bool is_snake_out_of_bounds(Snake& snake_moving);
     int is_snake_apple_colliding(Snake& snake_moving, vector<Apple>& apples);
+
+    bool try_move(char direction, Snake& tested_snake);
+    bool is_snake_colliding_snakes_no_state_change(Snake& tried_snake, Snake& snake_in_state_moving, vector<Snake>& snakes);
     
-    void print_game_state();
-    void get_full_history();
+    // void print_game_state();
+    string get_game_state();
+    string get_full_history();
 };
 
 #endif
