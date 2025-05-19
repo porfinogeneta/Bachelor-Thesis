@@ -1,6 +1,7 @@
 import pathlib
 
-PROJECT_PATH = pathlib.Path("/Users/szymon/Documents/Bachelor-Thesis")
+# PROJECT_PATH = pathlib.Path("/Users/szymon/Documents/Bachelor-Thesis")
+PROJECT_PATH = pathlib.Path("/home/ubuntu/Bachelor-Thesis")
 NANOGPT_DIR = PROJECT_PATH / pathlib.Path("src/training/nanoGPT/")
 
 # PYBIND

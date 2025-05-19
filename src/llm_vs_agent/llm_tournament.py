@@ -1,5 +1,5 @@
 
-from llm_vs_agent.game_visualizer import GameVisualizer
+# from llm_vs_agent.game_visualizer import GameVisualizer
 import subprocess
 import os
 import re
@@ -303,14 +303,14 @@ class TournamentManager:
                     no_choice_generations.append((batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state))
             
             file.write("="*50)
-            file.write("\nBAD GENERATIONS\n")
+            file.write(f"\nBAD GENERATIONS: {len(bad_generations)}\n")
             for batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state in bad_generations:
                 file.write(f"TOKEN: {incorrect_token}\n")
                 file.write(f"Batch index: {batch_idx}\nBatch Turn: {batch_turn}\nModel is {model_idx}\n\n")
                 file.write(f"{incorrect_state.get_game_state()}\n\n")
 
             file.write("="*50)
-            file.write("\nNO CHOICE GENERATIONS\n")
+            file.write(f"\nNO CHOICE GENERATIONS: {len(no_choice_generations)}\n")
             for batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state in no_choice_generations:
                 file.write(f"TOKEN: {incorrect_token}\n")
                 file.write(f"Batch index: {batch_idx}\nBatch Turn: {batch_turn}\nModel is {model_idx}\n\n")
@@ -327,11 +327,11 @@ class TournamentManager:
         #     logger.info(f"{incorrect_state.get_game_state()}")
 
 if __name__ == "__main__":
-   manager = TournamentManager(model_name="out-standard_pos_1774_ctx_bs_64_baby",
-                               device="mps",
-                                n_tournaments=12,
-                                batch_size=4)
+   manager = TournamentManager(model_name="out_standard_positions_bs_128",
+                               device="cuda",
+                                n_tournaments=1000,
+                                batch_size=250)
 
 #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
 
-   manager.run_unpadded_tournaments(output_file="tournamnets_results.txt", sample_valid_tokens=False)
+   manager.run_unpadded_tournaments(output_file="/home/ubuntu/Bachelor-Thesis/src/llm_vs_agent/tournaments/out_standard_positions_bs_128/bfs/valid/tournaments_resut_mode_idx_1.txt", sample_valid_tokens=True)

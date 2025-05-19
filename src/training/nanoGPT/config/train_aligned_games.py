@@ -16,8 +16,8 @@ always_save_checkpoint = False
 dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 16
-block_size = 8000 # context of up to 2816 previous characters
+batch_size = 32
+block_size = 4372 # size of the biggest game, that everything is aligned to
 # batch_size = 64
 # block_size = 2866 # context of up to 2816 previous characters
 

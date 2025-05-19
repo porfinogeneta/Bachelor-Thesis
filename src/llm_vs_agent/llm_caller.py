@@ -109,7 +109,7 @@ class LLMCaller:
             generated_sequences = generate_sequences(model=None, ctx=None, device=self.device, model_name=self.model_name, starts=game_sequences, temperature=0.8, legal_tokens=legal_tokens, top_k=top_k)
             # logger.info(generated_sequences)
             # logger.info(f"After gen: {generated_sequences[0].split()}")
-            logger.info(f"After gen: {generated_sequences[0].split()[-1]}")
+            # logger.info(f"After gen: {generated_sequences[0].split()[-1]}")
             # logger.info("="*20)
              # not possible to generate, return list of None, so random directions are generated
             if not generated_sequences:

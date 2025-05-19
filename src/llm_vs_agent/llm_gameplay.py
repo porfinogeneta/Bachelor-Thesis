@@ -1,5 +1,5 @@
 
-from llm_vs_agent.game_visualizer import GameVisualizer
+from src.llm_vs_agent.game_visualizer import GameVisualizer
 import subprocess
 import os
 import re
@@ -36,7 +36,7 @@ n_apples = 5
 board_width = 10
 board_height = 10
 
-def main(model_name: str, sample_valid_tokens: bool, agent_type: str = "random_agent"):
+def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: str = "random_agent"):
     """
     Runs the snake game simulation using the C++ classes exposed via pybind11 and language model.
 
@@ -53,7 +53,7 @@ def main(model_name: str, sample_valid_tokens: bool, agent_type: str = "random_a
     
 
     # llm caller
-    caller = LLMCaller(model_name=model_name, device="mps")
+    caller = LLMCaller(model_name=model_name, device=device)
 
     game_sequence = "<START> "
    
@@ -176,4 +176,4 @@ def main(model_name: str, sample_valid_tokens: bool, agent_type: str = "random_a
 
 
 if __name__ == "__main__":
-    print(main(model_name="out-standard_pos_1774_ctx_bs_64_baby", sample_valid_tokens=True))
+    print(main(model_name="out_standard_positions_bs_128", sample_valid_tokens=True, device="cuda"))
