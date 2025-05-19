@@ -53,7 +53,8 @@ PYBIND11_MODULE(snake_lib, m) {
         .def("is_snake_apple_colliding", &State::is_snake_apple_colliding, "Check for snake-apple collision")
         .def("get_game_state", &State::get_game_state, "Return string with the current game state")
         .def("get_full_history", &State::get_full_history, "Get the full game history")
-        .def("try_move", &State::try_move, "Returns True if the move is valid");
+        .def("try_move", &State::try_move, "Returns True if the move is valid")
+        .def("deepCopy", &State::deepCopy, py::return_value_policy::take_ownership);
 
     // Binding for the Agent class
     py::class_<Agent>(m, "Agent")

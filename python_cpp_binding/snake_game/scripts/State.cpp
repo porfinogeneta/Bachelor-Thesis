@@ -60,6 +60,55 @@ State::State(int n_snakes, int n_apples, int board_width, int board_height) {
 // }
 
 
+State* State::deepCopy() const {
+    
+    State* copiedState = new State(n_snakes, n_apples, board_width, board_height);
+    
+    // Clear the default initialization
+    copiedState->snakes.clear();
+    copiedState->apples.clear();
+    copiedState->apples_history.clear();
+    copiedState->eliminated_snakes.clear();
+    
+    // Copy the turn counter
+    copiedState->turn = this->turn;
+    copiedState->idx_prev_snake = this->idx_prev_snake;
+    
+    // Deep copy all snakes
+    for (const Snake& snake : this->snakes) {
+        Snake copiedSnake(snake.head.first, snake.head.second);
+        
+        // Copy the tail
+        copiedSnake.tail = snake.tail;
+        
+        // Copy the history
+        copiedSnake.moves_history = snake.moves_history;
+        copiedSnake.tails_len_history = snake.tails_len_history;
+        
+        copiedState->snakes.push_back(copiedSnake);
+    }
+    
+    // Deep copy apples
+    for (const Apple& apple : this->apples) {
+        copiedState->apples.push_back(Apple(apple.position.first, apple.position.second));
+    }
+    
+    // Deep copy apple history
+    for (const auto& appleVec : this->apples_history) {
+        vector<Apple> copiedAppleVec;
+        for (const Apple& apple : appleVec) {
+            copiedAppleVec.push_back(Apple(apple.position.first, apple.position.second));
+        }
+        copiedState->apples_history.push_back(copiedAppleVec);
+    }
+    
+    // Copy eliminated snakes set
+    copiedState->eliminated_snakes = this->eliminated_snakes;
+    
+    return copiedState;
+}
+
+
 // generates distinct pairs in range [0, n] (beginning snakes and apples positions)
 vector<pair<int, int> > State::generate_distinct_pairs(size_t n) {
     
@@ -188,6 +237,12 @@ bool State::is_snake_colliding_snakes_no_state_change(Snake& tried_snake, Snake&
         }
     }
 
+    // don't allow for collision with the snake itself, when it's length is 2
+    // we need to consider stepping on the first tail segment in unmoved original snake
+    if (!snake_in_state_moving.tail.empty() && moving_head == snake_in_state_moving.tail[0]){
+        return true;
+    }
+
     for (const Snake& other_snake: snakes){
         
         if (&snake_in_state_moving == &other_snake) {
@@ -211,6 +266,7 @@ bool State::is_snake_colliding_snakes_no_state_change(Snake& tried_snake, Snake&
 
     return false;
 }
+
 
 bool State::is_snake_out_of_bounds(Snake& snake_moving){
     pair<int, int> moving_head = snake_moving.head;
@@ -240,6 +296,7 @@ bool State::try_move(char direction, Snake& tested_snake){
     cpy.move_snake(direction);
     return !is_snake_colliding_snakes_no_state_change(cpy, tested_snake, snakes) && !is_snake_out_of_bounds(cpy);
 }
+
 
 // returns true if snake moved successfully
 // returns false if snake collided with another snake or with the wall

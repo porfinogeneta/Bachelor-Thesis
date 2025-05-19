@@ -137,6 +137,8 @@ from contextlib import nullcontext
 import torch
 from src.training.nanoGPT.model import GPTConfig, GPT
 from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
+from src.consts import NANOGPT_DIR
+import pathlib
 
 # # -----------------------------------------------------------------------------
 # init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
@@ -262,8 +264,7 @@ def configure_model(model_name, device):
     ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
 
-    nanoGPT_dir = "/Users/szymon/Documents/Bachelor-Thesis/src/training/nanoGPT/"
-    out_dir = nanoGPT_dir + model_name
+    out_dir = NANOGPT_DIR / pathlib.Path(model_name)
 
     # model
     if init_from == 'resume':
@@ -298,13 +299,14 @@ def configure_model(model_name, device):
             meta = pickle.load(f)
     else:
         # ok let's assume gpt-2 encodings by default
-        print("No meta.pkl found, assuming GPT-2 encodings...")
+        # print("No meta.pkl found, assuming GPT-2 encodings...")
+        pass
 
 
     return model, ctx
    
 
-def generate_sequences(model, ctx, device, starts, temperature, legal_tokens, top_k):
+def generate_sequences(model, ctx, device, model_name: str, starts, temperature, legal_tokens, top_k):
 
     """
         This function is overloaded, if legal tokens are provided, legal token generation is used;
@@ -314,7 +316,8 @@ def generate_sequences(model, ctx, device, starts, temperature, legal_tokens, to
     # assertion for proper overloading
     assert((legal_tokens == None and top_k == 1) or (legal_tokens != None and top_k == None))
 
-    # model, ctx = configure_model(model_name="out-standard_pos_1774_ctx_bs_64_baby", device="mps")
+    # on each generation configure model anew
+    model, ctx = configure_model(model_name=model_name, device=device)
 
     max_new_tokens = 1
 
@@ -329,7 +332,7 @@ def generate_sequences(model, ctx, device, starts, temperature, legal_tokens, to
 
 
     if legal_tokens == None:
-
+        # print("NORMAL GENERATION\n\n")
         # run standard generation
         with torch.no_grad():
             with ctx:

@@ -8,9 +8,6 @@ from dataclasses import dataclass
 
 import sys
 import os
-# visualizer
-# from src.snake_game.game_visualizer import GameVisualizer
-from src.llm_vs_agent.game_visualizer import GameVisualizer
 
 # llm caller
 from src.llm_vs_agent.llm_caller import LLMCaller
@@ -20,11 +17,8 @@ from src.logger.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# cpp code
-module_path = '/Users/szymon/Documents/Bachelor-Thesis/python_cpp_binding/'
-# module_path = "/home/ubuntu/Bachelor-Thesis/python_cpp_binding/"
-
-sys.path.append(module_path)
+from src.consts import PYBIND_DIR
+sys.path.append(str(PYBIND_DIR))
 import snake_lib
 
 import argparse
@@ -48,7 +42,7 @@ class GameState:
 
 class TournamentManager:
 
-    def __init__(self, model_name: str, n_tournaments: int, batch_size: int):
+    def __init__(self, model_name: str, device: str, n_tournaments: int, batch_size: int):
         self.n_tournaments = n_tournaments
         self.batch_size= batch_size
         self.games = []
@@ -57,9 +51,9 @@ class TournamentManager:
         self.results_per_batch = []
         # dictionary of incorrect tokens paired with the state for which they were generated
         self.incorrect_token_paired_with_state = []
-        self.llm_caller = LLMCaller(model_name=model_name)
+        self.llm_caller = LLMCaller(model_name=model_name, device=device)
     
-    def initialize_game(self, game_id: int):
+    def initialize_game(self, game_id: int, batch_model_id: int):
         """Initialize game and add it to games list"""
 
         
@@ -71,7 +65,7 @@ class TournamentManager:
 
         
         # initialize both snakes
-        game_sequence += f"S0 R{state.snakes[0].moves_history[0][0]}C{state.snakes[0].moves_history[0][1]} L{len(state.snakes[0].tail)} "
+        game_sequence += f"S0 R{state.snakes[0].head[0]}C{state.snakes[0].head[1]} L{len(state.snakes[0].tail)} "
         game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
         game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
         game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
@@ -80,7 +74,7 @@ class TournamentManager:
             game_id=game_id,
             state=state,
             game_sequence=game_sequence,
-            prev_head=state.snakes[1].head,
+            prev_head=state.snakes[batch_model_id].head,
             improper_generations=0,
         ))
 
@@ -97,19 +91,23 @@ class TournamentManager:
         while batch_idx < self.n_tournaments / self.batch_size:
             
             # initialize batch size of games
+            # in every batch choose at random which snake is model and which is an agent
+            # MODEL_IDX = random.choice([0, 1])
+            # AGENT_IDX = 1 if MODEL_IDX == 0 else 0
+            MODEL_IDX = 1
+            AGENT_IDX = 0
+            
             # reset games list
             self.games = []
             for i in range(self.batch_size):
-                self.initialize_game(game_id=i)
+                self.initialize_game(game_id=i, batch_model_id=MODEL_IDX)
 
             active_games = list(range(self.batch_size))
-
-            # in every batch choose at random which snake is model and which is an agent
-            MODEL_IDX = random.choice([0, 1])
-            AGENT_IDX = 1 if MODEL_IDX == 0 else 0
+            
 
             # save statisitcs for each batch
             batch_scores = {"model": 0, "agent": 0, "incorrect_generations": 0}
+            
             # begin a new batch
             batch_idx += 1
 
@@ -122,6 +120,15 @@ class TournamentManager:
                     state = game.state
 
                     # logger.info(state.print_game_state())
+
+                    # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
+                    # protection against looping generation
+                    if state.turn > 1000:
+                        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
+                            batch_scores["agent"] += 1
+                        else:
+                            batch_scores["model"] += 1
+
 
                     # CHECK END GAME
                     if state.is_game_over():
@@ -151,7 +158,7 @@ class TournamentManager:
                     break
 
                 # APPLY BATCH TURN
-                # Determine current batch turn (0 for agent, 1 for LLM)
+                # Determine current batch turn
                 batch_turn = self.games[active_games[0]].state.turn % n_snakes
 
                 # logger.error(len(set([turn for i in range(len(active_games)) for turn in self.games[active_games[i]].state.turn])))
@@ -168,10 +175,11 @@ class TournamentManager:
                             state.turn += 1
                             apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples])
                             # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
-                            game.game_sequence += f"S{AGENT_IDX} <DEAD> L{len(state.snakes[0].tail)} {apple_positions} "
+                            game.game_sequence += f"S{AGENT_IDX} <DEAD> L{len(state.snakes[AGENT_IDX].tail)} {apple_positions} "
                             continue
                             
                         direction = self.agent.bfs_based_agent(state, AGENT_IDX)
+                        # direction = self.agent.random_based_agent(state, AGENT_IDX)
                         state.move(direction, AGENT_IDX)
                         
                         game.state = state
@@ -233,9 +241,11 @@ class TournamentManager:
                             game = self.games[game_id]
                             state = game.state
 
+                            state_cpy = state.deepCopy()
+
                             # states and incorrect tokens that were generated for them
                             if incorrect_tokens[i] != None:
-                                self.incorrect_token_paired_with_state.append((batch_idx, incorrect_tokens[i], state))
+                                self.incorrect_token_paired_with_state.append((batch_idx, batch_turn, MODEL_IDX, incorrect_tokens[i], state_cpy))
                             
                             state.move(direction, MODEL_IDX)
                             
@@ -254,7 +264,7 @@ class TournamentManager:
             logger.info(f"Batch: {batch_idx}/{self.n_tournaments // self.batch_size}\nResult: {batch_scores}\nModel is S{MODEL_IDX}\n")      
         
         with open(output_file, "w") as file:
-            file.write(f"{self.results}\n")
+            file.write(f"{self.results}\n\n")
 
 
             batch_res = ""
@@ -263,14 +273,52 @@ class TournamentManager:
 
             file.write(batch_res)
 
-            file.write("Improper Moves:\n\n")
+            file.write("="*50)
+
+            file.write("\n")
+            # incorrect generation can be divided into situations where correct generation was impossible
+            # and situations where model just broke down and generated invlid tokens
+            # in the former situation we won't count it as improper generation
+
+            bad_generations = []
+            no_choice_generations = []
+
             # - Model is S{self.results_per_batch[batch_idx-1]['model_idx']}
-            for batch_idx, incorrect_token, incorrect_state in self.incorrect_token_paired_with_state:
+            for batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state in self.incorrect_token_paired_with_state:
+                
+                # illegal move where no space was left shouldn't count as illegal move
+                snake = incorrect_state.snakes[model_idx]
+                were_there_options = False
+                for d in "UDLR":
+                    if incorrect_state.try_move(d, snake) == True:
+                        logger.error(d)
+                        logger.error(model_idx)
+                        logger.error(incorrect_state)
+                        were_there_options = True
+                        break
+                
+                if were_there_options:
+                    bad_generations.append((batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state))
+                else:
+                    no_choice_generations.append((batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state))
+            
+            file.write("="*50)
+            file.write("\nBAD GENERATIONS\n")
+            for batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state in bad_generations:
                 file.write(f"TOKEN: {incorrect_token}\n")
-                file.write(f"Batch index: {batch_idx}\n")
+                file.write(f"Batch index: {batch_idx}\nBatch Turn: {batch_turn}\nModel is {model_idx}\n\n")
+                file.write(f"{incorrect_state.get_game_state()}\n\n")
+
+            file.write("="*50)
+            file.write("\nNO CHOICE GENERATIONS\n")
+            for batch_idx, batch_turn, model_idx, incorrect_token, incorrect_state in no_choice_generations:
+                file.write(f"TOKEN: {incorrect_token}\n")
+                file.write(f"Batch index: {batch_idx}\nBatch Turn: {batch_turn}\nModel is {model_idx}\n\n")
                 file.write(f"{incorrect_state.get_game_state()}\n\n")
 
 
+
+            
         # logger.info(self.results)
 
         # for batch_idx, incorrect_token, incorrect_state in self.incorrect_token_paired_with_state:
@@ -280,7 +328,10 @@ class TournamentManager:
 
 if __name__ == "__main__":
    manager = TournamentManager(model_name="out-standard_pos_1774_ctx_bs_64_baby",
-                                n_tournaments=10,
-                                batch_size=5)
+                               device="mps",
+                                n_tournaments=12,
+                                batch_size=4)
+
+#    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
 
    manager.run_unpadded_tournaments(output_file="tournamnets_results.txt", sample_valid_tokens=False)

@@ -151,7 +151,7 @@ class GPT(nn.Module):
                 torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layer))
 
         # report number of parameters
-        print("number of parameters: %.2fM" % (self.get_num_params()/1e6,))
+        # print("number of parameters: %.2fM" % (self.get_num_params()/1e6,))
 
     def get_num_params(self, non_embedding=True):
         """
@@ -381,18 +381,19 @@ class GPT(nn.Module):
                 item_legal_tokens = legal_tokens[i]
 
                 # legal token mask for current item
-                if item_legal_tokens != []:
-                    item_legal_tokens_mask = torch.zeros_like(item_logits)
+                # if item_legal_tokens != []:
+                item_legal_tokens_mask = torch.zeros_like(item_logits)
 
-                    # set up 1 for legal tokens
-                    item_legal_tokens_mask[item_legal_tokens] = 1.0
+                # set up 1 for legal tokens
+                item_legal_tokens_mask[item_legal_tokens] = 1.0
 
-                    # probability reduction for illegal tokens
-                    item_logits = item_logits.masked_fill(item_legal_tokens_mask == 0, float("-inf"))
+                # probability reduction for illegal tokens
+                item_logits = item_logits.masked_fill(item_legal_tokens_mask == 0, float("-inf"))
 
                 
                 # apply softmax to convert logits to (normalized) probabilities
                 item_probs = F.softmax(item_logits, dim=-1)
+                # print(item_probs)
                 # sample max probability token, if no tokens were legal
                 # simply return most probable in any case
                 item_idx_next = torch.argmax(item_probs, dim=-1, keepdim=True)

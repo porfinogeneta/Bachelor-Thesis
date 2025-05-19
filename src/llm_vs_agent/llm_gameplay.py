@@ -19,11 +19,11 @@ from src.logger.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# cpp code
-module_path = '/Users/szymon/Documents/Bachelor-Thesis/python_cpp_binding/'
-# module_path = "/home/ubuntu/Bachelor-Thesis/python_cpp_binding/"
 
-sys.path.append(module_path)
+from src.consts import PYBIND_DIR
+
+sys.path.append(str(PYBIND_DIR))
+
 import snake_lib
 
 import argparse
@@ -36,7 +36,7 @@ n_apples = 5
 board_width = 10
 board_height = 10
 
-def main(model_name: str, agent_type: str = "random_agent"):
+def main(model_name: str, sample_valid_tokens: bool, agent_type: str = "random_agent"):
     """
     Runs the snake game simulation using the C++ classes exposed via pybind11 and language model.
 
@@ -53,7 +53,7 @@ def main(model_name: str, agent_type: str = "random_agent"):
     
 
     # llm caller
-    caller = LLMCaller(model_name=model_name)
+    caller = LLMCaller(model_name=model_name, device="mps")
 
     game_sequence = "<START> "
    
@@ -67,7 +67,7 @@ def main(model_name: str, agent_type: str = "random_agent"):
     AGENT_IDX = 1
 
     # initialize both snakes
-    game_sequence += f"S0 R{state.snakes[0].moves_history[0][0]}C{state.snakes[0].moves_history[0][1]} L{len(state.snakes[0].tail)} "
+    game_sequence += f"S0 R{state.snakes[0].head[0]}C{state.snakes[0].head[1]} L{len(state.snakes[0].tail)} "
     game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
     game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
     game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
@@ -90,6 +90,13 @@ def main(model_name: str, agent_type: str = "random_agent"):
         if visualize:
             visualizer.visualize_state(state)
 
+        # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
+        if state.turn > 800:
+             if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
+                 return improper_genenerations_cnt, "agent", state
+             else:
+                 return improper_genenerations_cnt, "model", state
+
         # agent's snake is longer and llm's is dead, no point of further gameplay
         if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
             return improper_genenerations_cnt, "agent", state
@@ -105,24 +112,35 @@ def main(model_name: str, agent_type: str = "random_agent"):
             # print("Python turn")
 
             # snake was eleminated not need for any generation, skip the turn
-            if snake_moving_idx in state.eliminated_snakes:
+            if MODEL_IDX in state.eliminated_snakes:
                 state.turn += 1
                 continue
 
             prev_head = state.snakes[MODEL_IDX].head
 
-            batch_moves, _, _ = caller.sample_next_batch_moves_from_legal_tokens(
-                prev_heads=[prev_head], 
-                game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
-                states=[state],
-                language_model_snake_idx=MODEL_IDX
-            )
-                
+            if sample_valid_tokens:
 
-            # logger.info(batch_moves)
+                batch_moves, ict, cnt = caller.sample_next_batch_moves_from_legal_tokens(
+                    prev_heads=[prev_head], 
+                    game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
+                    states=[state],
+                    language_model_snake_idx=MODEL_IDX
+                )
+
+            else:
+                batch_moves, ict, cnt = caller.sample_next_batch_moves(
+                    prev_heads=[prev_head], 
+                    game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
+                    top_k=1
+                )
+
+            improper_genenerations_cnt += cnt
+                    
+            if ict != [None]:
+                logger.error(ict)
 
             # given direction move, batch_moves is a lists, hence [0]
-            state.move(batch_moves[0], snake_moving_idx)
+            state.move(batch_moves[0], MODEL_IDX)
 
             # add current S_MODEL_IDX position
             game_sequence += f"S{MODEL_IDX} R{state.snakes[MODEL_IDX].head[0]}C{state.snakes[MODEL_IDX].head[1]} L{len(state.snakes[MODEL_IDX].tail)} "
@@ -132,13 +150,13 @@ def main(model_name: str, agent_type: str = "random_agent"):
 
             # print("Cpp turn")
 
-            direction = agent.bfs_based_agent(state, snake_moving_idx)
+            direction = agent.bfs_based_agent(state, AGENT_IDX)
             # if agent_type == "random_agent":
             #     direction = agent.random_based_agent(state, snake_moving_idx)
             # print(f"Snake {snake_moving_idx} moving: {direction}")
 
             # given direction move
-            state.move(direction, snake_moving_idx)
+            state.move(direction, AGENT_IDX)
 
             # add current S_AGENT_IDX position
             game_sequence += f"S{AGENT_IDX} R{state.snakes[AGENT_IDX].head[0]}C{state.snakes[AGENT_IDX].head[1]} L{len(state.snakes[AGENT_IDX].tail)} "
@@ -158,4 +176,4 @@ def main(model_name: str, agent_type: str = "random_agent"):
 
 
 if __name__ == "__main__":
-    print(main(model_name="out-standard_pos_1774_ctx_bs_64_baby"))
+    print(main(model_name="out-standard_pos_1774_ctx_bs_64_baby", sample_valid_tokens=True))

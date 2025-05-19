@@ -2,6 +2,8 @@ import sys
 import os
 from tqdm import tqdm
 
+from src.consts import RAW_DATA_20K
+
 # cpp code
 module_path = '/Users/szymon/Documents/Bachelor-Thesis/python_cpp_binding/'
 # module_path = "/home/ubuntu/Bachelor-Thesis/python_cpp_binding/"
@@ -78,7 +80,7 @@ class DataGenerator:
 if __name__ == "__main__":
     generator = DataGenerator()
 
-    generator.create_data(20000, "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/raw/raw_state_history20kp.txt")
+    generator.create_data(20000, RAW_DATA_20K)
 
 
     

@@ -51,6 +51,8 @@ public:
 
     bool try_move(char direction, Snake& tested_snake);
     bool is_snake_colliding_snakes_no_state_change(Snake& tried_snake, Snake& snake_in_state_moving, vector<Snake>& snakes);
+
+    State* deepCopy() const;
     
     // void print_game_state();
     string get_game_state();
