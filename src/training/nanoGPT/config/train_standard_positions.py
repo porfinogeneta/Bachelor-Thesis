@@ -19,8 +19,8 @@ always_save_checkpoint = False
 dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 256
-block_size = 64 # context of up to 2816 previous characters
+batch_size = 1024
+block_size = 8 # context of up to 2816 previous characters
 # batch_size = 64
 # block_size = 2866 # context of up to 2816 previous characters
 

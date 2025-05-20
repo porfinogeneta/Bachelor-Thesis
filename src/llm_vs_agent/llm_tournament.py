@@ -80,7 +80,7 @@ class TournamentManager:
         ))
 
 
-    def run_tournaments(self, output_file: str, sample_valid_tokens: bool = False, agent: str = "bfs", model_idx: int = 1):
+    def run_tournaments(self, output_file: str, model_idx: int, sample_valid_tokens: bool = False, agent: str = "bfs"):
         """
             This is the easiest implementation, where batch feeded to the model
             decreases in size as the games keep on ending
@@ -135,6 +135,8 @@ class TournamentManager:
                             batch_scores["agent"] += 1
                         else:
                             batch_scores["model"] += 1
+
+                        games_to_remove.append(game_id)
 
 
                     # CHECK END GAME
@@ -304,7 +306,7 @@ class TournamentManager:
                     if incorrect_state.try_move(d, snake) == True:
                         logger.error(d)
                         logger.error(model_idx)
-                        logger.error(incorrect_state)
+                        logger.error(incorrect_state.get_game_state())
                         were_there_options = True
                         break
                 
@@ -341,12 +343,13 @@ if __name__ == "__main__":
 
     # script for finding the best approach for defating each agent
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
-   
-    MODELS = ["out_aligned_games_bs_4372", "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"]
+    #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
+    MODELS = ["out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
     AGENTS = ["bfs", "random"]
+    # AGENTS = ["bfs"]
 
     VALID = ["valid", "invalid"]
 
@@ -359,7 +362,7 @@ if __name__ == "__main__":
 
 
                     manager = TournamentManager(model_name=model_name,
-                                                device="mps",
+                                                device="cuda",
                                                     n_tournaments=1000,
                                                     batch_size=250)
 
