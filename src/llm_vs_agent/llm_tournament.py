@@ -5,6 +5,7 @@ import os
 import re
 import random
 from dataclasses import dataclass
+import pathlib
 
 import sys
 import os
@@ -17,7 +18,7 @@ from src.logger.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-from src.consts import PYBIND_DIR
+from src.consts import PYBIND_DIR, PROJECT_PATH
 sys.path.append(str(PYBIND_DIR))
 import snake_lib
 
@@ -79,7 +80,7 @@ class TournamentManager:
         ))
 
 
-    def run_unpadded_tournaments(self, output_file: str, sample_valid_tokens: bool = False):
+    def run_tournaments(self, output_file: str, sample_valid_tokens: bool = False, agent: str = "bfs", model_idx: int = 1):
         """
             This is the easiest implementation, where batch feeded to the model
             decreases in size as the games keep on ending
@@ -94,8 +95,14 @@ class TournamentManager:
             # in every batch choose at random which snake is model and which is an agent
             # MODEL_IDX = random.choice([0, 1])
             # AGENT_IDX = 1 if MODEL_IDX == 0 else 0
-            MODEL_IDX = 1
-            AGENT_IDX = 0
+            # MODEL_IDX = 1
+            # AGENT_IDX = 0
+            if model_idx == 1:
+                MODEL_IDX = 1
+                AGENT_IDX = 0
+            else:
+                MODEL_IDX = 0
+                AGENT_IDX = 1 
             
             # reset games list
             self.games = []
@@ -177,9 +184,13 @@ class TournamentManager:
                             # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
                             game.game_sequence += f"S{AGENT_IDX} <DEAD> L{len(state.snakes[AGENT_IDX].tail)} {apple_positions} "
                             continue
-                            
-                        direction = self.agent.bfs_based_agent(state, AGENT_IDX)
-                        # direction = self.agent.random_based_agent(state, AGENT_IDX)
+                        
+
+                        if agent == "bfs":
+                            direction = self.agent.bfs_based_agent(state, AGENT_IDX)
+                        elif agent == "random":
+                            direction = self.agent.random_based_agent(state, AGENT_IDX)
+                        
                         state.move(direction, AGENT_IDX)
                         
                         game.state = state
@@ -327,11 +338,48 @@ class TournamentManager:
         #     logger.info(f"{incorrect_state.get_game_state()}")
 
 if __name__ == "__main__":
-   manager = TournamentManager(model_name="out_standard_positions_bs_128",
-                               device="cuda",
-                                n_tournaments=1000,
-                                batch_size=250)
 
-#    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
+    # script for finding the best approach for defating each agent
+    TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
+   
+    MODELS = ["out_aligned_games_bs_4372", "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"]
 
-   manager.run_unpadded_tournaments(output_file="/home/ubuntu/Bachelor-Thesis/src/llm_vs_agent/tournaments/out_standard_positions_bs_128/bfs/valid/tournaments_resut_mode_idx_1.txt", sample_valid_tokens=True)
+    # MODELS = ["out_standard_positions_bs_64"]
+
+    AGENTS = ["bfs", "random"]
+
+    VALID = ["valid", "invalid"]
+
+    MODEL_IDX = [1, 0]
+
+    for model_name in MODELS:
+        for agent_type in AGENTS:
+            for do_sample in VALID:
+                for model_idx in MODEL_IDX:
+
+
+                    manager = TournamentManager(model_name=model_name,
+                                                device="mps",
+                                                    n_tournaments=1000,
+                                                    batch_size=250)
+
+                    #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
+                    output_directory = PROJECT_PATH / TESTING_PATH / model_name / agent_type / do_sample / f"model_idx_{model_idx}"
+                    output_directory.mkdir(parents=True, exist_ok=True)
+                    
+                    OUTPUT_FILE = output_directory / "tournaments_results.txt"
+
+                    sample = True if do_sample == "valid" else False
+
+                    manager.run_tournaments(output_file=str(OUTPUT_FILE), sample_valid_tokens=sample, agent=agent_type, model_idx=model_idx)
+
+
+
+    # manager = TournamentManager(model_name="out_standard_positions_bs_128",
+    #                         device="cuda",
+    #                             n_tournaments=1000,
+    #                             batch_size=250)
+
+    # #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
+
+    # manager.run_unpadded_tournaments(output_file="/home/ubuntu/Bachelor-Thesis/src/llm_vs_agent/tournaments/out_standard_positions_bs_128/bfs/valid/tournaments_resut_mode_idx_1.txt", sample_valid_tokens=True)
