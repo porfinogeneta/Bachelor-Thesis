@@ -344,7 +344,7 @@ if __name__ == "__main__":
     # script for finding the best approach for defating each agent
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
-    MODELS = ["out_standard_positions_bs_8"]
+    MODELS = ["out_aligned_games_bs_4372"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 

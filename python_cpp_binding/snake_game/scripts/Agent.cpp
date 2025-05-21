@@ -167,7 +167,8 @@ char Agent::random_based_agent(const State &state, int current_snake_idx) {
         // this agent is based on choosing a position that is either empty or contains an apple
         // whenever possible we choose position that won't cause the snake's suicide, i.e. is not
         // in any of the snakes bodies and is not out of bounds, we favour positions with apples,
-        // we increase probability of a position being chosen by adding a duplicate of apple position
+        // we increase probability of a position being chosen by giving viable moves apple moves only
+        // if there are any nearby
 
         // get current snake position
         int x = state.snakes[current_snake_idx].head.first;
