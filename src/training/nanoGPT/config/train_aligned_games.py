@@ -1,7 +1,7 @@
 # train a miniature character-level shakespeare model
 # good for debugging and playing on macbooks and such
 
-out_dir = 'out-aligned_games'
+out_dir = 'aligned_games/out_aligned_bs_4352'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often
@@ -16,13 +16,9 @@ always_save_checkpoint = False
 dataset = 'aligned_games'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 16
-block_size = 256 # size of the biggest game, that everything is aligned to
-# batch_size = 64
-# block_size = 2866 # context of up to 2816 previous characters
+batch_size = 64
+block_size = 4352
 
-# batch_size = 16
-# block_size = 128 # context of up to 2816 previous characters
 
 # baby GPT model :)
 n_layer = 6
