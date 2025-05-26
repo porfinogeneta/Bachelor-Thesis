@@ -41,15 +41,18 @@ public:
 
     // void set_log_file(const string& filename);
     bool move(char direction, int snake_moving_idx);
+    bool move_without_apples_changed(char direction, int snake_moving_idx);
     void get_beginning_snake_heads_positions(vector<pair<int, int>>& snakes);
     void get_apples_positions(vector<Apple>& apples);
     bool is_game_over();
+    int get_winner();
     
     bool is_snake_colliding_snakes(Snake& snake_moving, vector<Snake>& snakes);
     bool is_snake_out_of_bounds(Snake& snake_moving);
     int is_snake_apple_colliding(Snake& snake_moving, vector<Apple>& apples);
 
     bool try_move(char direction, Snake& tested_snake);
+    vector<char> get_all_possible_moves(int snake_idx);
     bool is_snake_colliding_snakes_no_state_change(Snake& tried_snake, Snake& snake_in_state_moving, vector<Snake>& snakes);
 
     State* deepCopy() const;

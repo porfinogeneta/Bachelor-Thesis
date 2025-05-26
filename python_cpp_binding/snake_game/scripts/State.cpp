@@ -298,6 +298,28 @@ bool State::try_move(char direction, Snake& tested_snake){
 }
 
 
+vector<char> State::get_all_possible_moves(int snake_idx) {
+    // returns all possible moves for the snake with index snake_idx
+    vector<char> possible_moves;
+    
+    // check if snake is eliminated
+    if (eliminated_snakes.find(snake_idx) != eliminated_snakes.end()) {
+        return possible_moves; // no moves for eliminated snake
+    }
+
+    Snake& current_snake = snakes[snake_idx];
+
+    // check all four directions
+    for (char direction : {'U', 'D', 'L', 'R'}) {
+        if (try_move(direction, current_snake)) {
+            possible_moves.push_back(direction);
+        }
+    }
+
+    return possible_moves;
+}
+
+
 // returns true if snake moved successfully
 // returns false if snake collided with another snake or with the wall
 bool State::move(char direction, int snake_moving_idx){
@@ -370,6 +392,38 @@ bool State::move(char direction, int snake_moving_idx){
 
 }
 
+bool State::move_without_apples_changed(char direction, int snake_moving_idx) {
+    // this function is used to move the snake without changing apples positions
+    // it is used in MCTS to simulate moves without changing apples positions
+
+    // check if snake is already eliminated, treat eliminated snake as a wall
+    if (eliminated_snakes.find(snake_moving_idx) != eliminated_snakes.end()) {
+        // skipped turn don't add any move
+        turn++;
+        return false;
+    }
+
+    snakes[snake_moving_idx].move_snake(direction);
+
+    if (is_snake_colliding_snakes(snakes[snake_moving_idx], snakes) || 
+        is_snake_out_of_bounds(snakes[snake_moving_idx])) {
+
+        eliminated_snakes.insert(snake_moving_idx);
+        turn++;
+        return false;
+    }
+
+    // add new position to the snake moves history
+    snakes[snake_moving_idx].moves_history.push_back(snakes[snake_moving_idx].head);
+    
+    // after the move add tail length to history 
+    snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
+
+    turn++;
+
+    return true;
+}
+
 // all snakes eliminated => game over
 bool State::is_game_over() {
     
@@ -377,8 +431,81 @@ bool State::is_game_over() {
     // for (const auto& snake : eliminated_snakes) {
     //     cout << "Snake " << snake << " is eliminated." << endl;
     // }
+    if (eliminated_snakes.size() == n_snakes) {
+        return true; // all snakes are eliminated
+    }
 
-    return eliminated_snakes.size() == (uint)n_snakes;
+    vector<int> living_snakes;
+    for (size_t i = 0; i < snakes.size(); i++) {
+        if (eliminated_snakes.find(i) == eliminated_snakes.end()) {
+            living_snakes.push_back(i);
+        }
+    }
+
+    // only one living snake has left
+    if (living_snakes.size() == 1) {
+        // if the snake is longer than all eliminated snakes
+        for (int e : eliminated_snakes) {
+            if (snakes[living_snakes[0]].tail.size() + 1 < snakes[e].tail.size() + 1) {
+                // game is not over, this snake is not the winner
+                // it's still not longer than all of eliminated snakes
+                return false; 
+            }
+        }
+
+        return true; // only one snake left, game is over
+    }
+
+    return false;
+}
+
+int State::get_winner() {
+    // returns index of the winning snake, -1 on tie
+
+    // the winner is an alive snake
+    // if none is alive the winner is the longest snake
+    // if both have the same length, there is no winner
+
+    if (eliminated_snakes.size() == n_snakes) {
+        int max_length = -1;
+        int winner_idx = -1;
+        for (int i : eliminated_snakes){
+            if (snakes[i].tail.size() + 1 > max_length) {
+                max_length = snakes[i].tail.size() + 1;
+                winner_idx = i;
+            }else if (snakes[i].tail.size() + 1 == max_length) {
+                // if there is a tie, return -1
+                return -1; // no winner, all snakes have the same length
+            }
+        }
+    }
+
+
+    vector<int> living_snakes;
+    for (size_t i = 0; i < snakes.size(); i++) {
+        if (eliminated_snakes.find(i) == eliminated_snakes.end()) {
+            living_snakes.push_back(i);
+        }
+    }
+
+    if (living_snakes.size() == 1) {
+        // if there is only one living snake, return its index
+        return living_snakes[0];
+    }else {
+        // if there are multiple living snakes, find the longest one
+        int max_length = -1;
+        int winner_idx = -1;
+        for (int i : living_snakes) {
+            if (snakes[i].tail.size() + 1 > max_length) {
+                max_length = snakes[i].tail.size() + 1;
+                winner_idx = i;
+            }else if (snakes[i].tail.size() + 1 == max_length) {
+                // if there is a tie, return -1
+                return -1; // no winner, all snakes have the same length
+            }
+        }
+        return winner_idx;
+    }
 }
 
 

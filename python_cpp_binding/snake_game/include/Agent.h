@@ -24,6 +24,10 @@ public:
 
     char random_based_agent(const State &state, int current_snake_idx);
 
+    char mcts_based_agent(
+        const State &state, int current_snake_idx, int iterations
+    );
+
     // set<pair<int, int> > get_positions_occupiend_by_snakes(State state);
     // set<pair<int, int> > get_positions_occupied_by_apples(const vector<Apple>& apples);
 
