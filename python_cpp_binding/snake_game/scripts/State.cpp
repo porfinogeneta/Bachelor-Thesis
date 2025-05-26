@@ -459,53 +459,58 @@ bool State::is_game_over() {
     return false;
 }
 
-int State::get_winner() {
-    // returns index of the winning snake, -1 on tie
+int State::get_winner(const State& prev_state) {
+    // returns the index of winning snake or -1 if no winner yet
+    // winner is calculated based on scores
 
-    // the winner is an alive snake
-    // if none is alive the winner is the longest snake
-    // if both have the same length, there is no winner
+    int snake_0_score = 0;
+    int snake_1_score = 0;
 
-    if (eliminated_snakes.size() == n_snakes) {
-        int max_length = -1;
-        int winner_idx = -1;
-        for (int i : eliminated_snakes){
-            if (snakes[i].tail.size() + 1 > max_length) {
-                max_length = snakes[i].tail.size() + 1;
-                winner_idx = i;
-            }else if (snakes[i].tail.size() + 1 == max_length) {
-                // if there is a tie, return -1
-                return -1; // no winner, all snakes have the same length
-            }
+    // highest score if the snake grows
+    // if snake 0 grew
+    if (prev_state.snakes[0].tail.size() < snakes[0].tail.size()) {
+        snake_0_score += 1000;
+    }
+    if (prev_state.snakes[1].tail.size() < snakes[1].tail.size()) {
+        snake_1_score += 1000;
+    }
+
+    // which snake is closer to all apples
+    for (const Apple& apple : apples) {
+        // distance to the apple for snake 0
+        int dist_0 = abs(snakes[0].head.first - apple.position.first) + abs(snakes[0].head.second - apple.position.second);
+        // distance to the apple for snake 1
+        int dist_1 = abs(snakes[1].head.first - apple.position.first) + abs(snakes[1].head.second - apple.position.second);
+        
+        if (dist_0 < dist_1) {
+            snake_0_score += 100;
+        } else if (dist_1 < dist_0) {
+            snake_1_score += 100;
         }
     }
 
-
-    vector<int> living_snakes;
-    for (size_t i = 0; i < snakes.size(); i++) {
-        if (eliminated_snakes.find(i) == eliminated_snakes.end()) {
-            living_snakes.push_back(i);
-        }
+    // if snake with a move kills the other snake, it gets 10000 points
+    if (prev_state.eliminated_snakes.find(1) == prev_state.eliminated_snakes.end() && 
+        eliminated_snakes.find(1) != eliminated_snakes.end()) {
+        snake_0_score += 10000;
+    }
+    if (prev_state.eliminated_snakes.find(0) == prev_state.eliminated_snakes.end() && 
+        eliminated_snakes.find(0) != eliminated_snakes.end()) {
+        snake_1_score += 10000;
     }
 
-    if (living_snakes.size() == 1) {
-        // if there is only one living snake, return its index
-        return living_snakes[0];
-    }else {
-        // if there are multiple living snakes, find the longest one
-        int max_length = -1;
-        int winner_idx = -1;
-        for (int i : living_snakes) {
-            if (snakes[i].tail.size() + 1 > max_length) {
-                max_length = snakes[i].tail.size() + 1;
-                winner_idx = i;
-            }else if (snakes[i].tail.size() + 1 == max_length) {
-                // if there is a tie, return -1
-                return -1; // no winner, all snakes have the same length
-            }
-        }
-        return winner_idx;
+    if (snake_0_score > snake_1_score) {
+        // snake 0 is the winner
+        return 0;
+    } else if (snake_1_score > snake_0_score) {
+        // snake 1 is the winner
+        return 1;
+    } else {
+        // no winner yet
+        return -1;
     }
+    
+
 }
 
 

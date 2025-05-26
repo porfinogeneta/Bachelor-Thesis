@@ -23,7 +23,6 @@ import pickle
 from contextlib import nullcontext
 
 import numpy as np
-import random
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
@@ -121,23 +120,21 @@ def get_batch(split):
         data = np.memmap(os.path.join(data_dir, 'train.bin'), dtype=np.uint16, mode='r')
     else:
         data = np.memmap(os.path.join(data_dir, 'val.bin'), dtype=np.uint16, mode='r')
-    # ix = torch.randint(len(data) - block_size, (batch_size,))
-    # begin all batches from a <START> token
-    start_indices = [i for i, token in enumerate(data) if token == 0]
 
-    valid_indices = [i for i in start_indices if i + block_size <= len(data)]
-
-    if len(valid_indices) < batch_size:
-        print(f"Warning: Only {len(valid_indices)} valid start positions found. Need {batch_size}.")
-
-    selected_indices = random.sample(valid_indices, min(batch_size, len(valid_indices)))
-    # print(selected_indices)
-    # selected_indices = np.random.choice(valid_indices, len(valid_indices))
-
-    # selected_indices = torch.randint()
-
-    x = torch.stack([torch.from_numpy((data[i:i+block_size]).astype(np.int64)) for i in selected_indices])
-    y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size]).astype(np.int64)) for i in selected_indices])
+    # line length in a single game
+    start_token_indices = np.where(data == 0)[0]
+    start_tensor = torch.from_numpy(start_token_indices)
+    
+    
+    # ix = torch.randint(start_token_indices, (batch_size,))
+    # choose samples indices uniformly at random
+    indices = torch.randperm(start_tensor.size(0))[:batch_size]
+    # use chosen indices to select start positions in the data
+    ix = start_tensor[indices]
+    # print(f"ix: {ix}")
+    x = torch.stack([torch.from_numpy((data[i:i+block_size]).astype(np.int64)) for i in ix])
+    y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size]).astype(np.int64)) for i in ix])
+    
     if device_type == 'cuda':
         # pin arrays x,y, which allows us to move them to GPU asynchronously (non_blocking=True)
         x, y = x.pin_memory().to(device, non_blocking=True), y.pin_memory().to(device, non_blocking=True)

@@ -104,6 +104,8 @@ int MCTS::rollout(const State& state, int current_snake) {
     
     // copy the state
     State* rollout_state = state.deepCopy();
+    State *prev_state = rollout_state->deepCopy();
+    
     int snake_turn = current_snake;
     
     while (!rollout_state->is_game_over()
@@ -124,10 +126,11 @@ int MCTS::rollout(const State& state, int current_snake) {
         // cout << "Next snake index: " << snake_turn << endl;
     }
 
-    int winner = rollout_state->get_winner();
+    int winner = rollout_state->get_winner(*prev_state);
 
     delete rollout_state; // clean up the allocated memory
-    
+    delete prev_state; // clean up the allocated memory
+
     return winner;
 }
 

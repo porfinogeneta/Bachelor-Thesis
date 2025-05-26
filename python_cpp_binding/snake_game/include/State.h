@@ -45,7 +45,7 @@ public:
     void get_beginning_snake_heads_positions(vector<pair<int, int>>& snakes);
     void get_apples_positions(vector<Apple>& apples);
     bool is_game_over();
-    int get_winner();
+    int get_winner(const State& state);
     
     bool is_snake_colliding_snakes(Snake& snake_moving, vector<Snake>& snakes);
     bool is_snake_out_of_bounds(Snake& snake_moving);
