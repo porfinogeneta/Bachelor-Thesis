@@ -11,8 +11,8 @@ from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
 #     with open(input_file_path, 'w', encoding='utf-8') as f:
 #         f.write(requests.get(data_url).text)
 
-# input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
-input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/aligned_games/aligned_games20k.txt"
+input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/aligned_games/aligned_games20k.txt"
+# input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/aligned_games/aligned_games20k.txt"
 with open(input_file_path, 'r', encoding='utf-8') as f:
     data = f.read().replace("\n", " ")
 n = len(data)
@@ -68,11 +68,19 @@ tokenizer = Tokenizer()
 
 # Encode the entire file
 all_encoded_ids = encode_large_file(tokenizer, input_file_path)
+GAME_SIZE = 4362
 
-# Calculate split point (90% train, 10% val)
-split_point = int(len(all_encoded_ids) * 0.9)
+game_chunks = len(all_encoded_ids) // GAME_SIZE
+print(f"Total games in the file: {game_chunks}")
+# 90% of game chunks goes to train, 10% to val
+train_chunks = int(game_chunks * 0.9)
+
+split_point = int(train_chunks * GAME_SIZE)
 train_ids = all_encoded_ids[:split_point]
 val_ids = all_encoded_ids[split_point:]
+
+assert len(train_ids) % GAME_SIZE == 0, "Train data is not aligned to game size"
+assert len(val_ids) % GAME_SIZE == 0, "Val data is not aligned to game size"
 
 print(f"tokens amount {tokenizer.get_tokens_size()}")
 print(f"train has {len(train_ids):,} tokens")
