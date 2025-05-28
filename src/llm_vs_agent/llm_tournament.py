@@ -343,7 +343,8 @@ if __name__ == "__main__":
     # script for finding the best approach for defating each agent
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
-    MODELS = ["aligned_games/out_aligned_bs_512"]
+    #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
+    MODELS = ["aligned_games/out_aligned_bs_4352_batch_16"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
@@ -356,14 +357,21 @@ if __name__ == "__main__":
 
     for model_name in MODELS:
         for agent_type in AGENTS:
+
+            logger.info(f"Agent {agent_type}")
+
             for do_sample in SAMPLE:
+
+                logger.info(f"Sampling? {do_sample}")
+
                 for model_idx in MODEL_IDX:
 
+                    logger.info(f"Index {model_idx}")
 
                     manager = TournamentManager(model_name=model_name,
                                                 device="cuda",
-                                                    n_tournaments=100,
-                                                    batch_size=100)
+                                                    n_tournaments=1000,
+                                                    batch_size=500)
 
                     #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
                     output_directory = PROJECT_PATH / TESTING_PATH / model_name / agent_type / do_sample / f"model_idx_{model_idx}"

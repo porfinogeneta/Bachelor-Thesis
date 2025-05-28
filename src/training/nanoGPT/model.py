@@ -384,23 +384,24 @@ class GPT(nn.Module):
 
                 if not item_legal_tokens:
                     item_idx_next = torch.tensor([0], device=item_logits.device, dtype=torch.long)
-                # if item_legal_tokens != []:
-                item_legal_tokens_mask = torch.zeros_like(item_logits)
+                else:
+                    # if item_legal_tokens != []:
+                    item_legal_tokens_mask = torch.zeros_like(item_logits)
 
-                # set up 1 for legal tokens
-                item_legal_tokens_mask[item_legal_tokens] = 1.0
+                    # set up 1 for legal tokens
+                    item_legal_tokens_mask[item_legal_tokens] = 1.0
 
-                # probability reduction for illegal tokens
-                item_logits = item_logits.masked_fill(item_legal_tokens_mask == 0, float("-inf"))
+                    # probability reduction for illegal tokens
+                    item_logits = item_logits.masked_fill(item_legal_tokens_mask == 0, float("-inf"))
 
-                
-                # apply softmax to convert logits to (normalized) probabilities
-                item_probs = F.softmax(item_logits, dim=-1)
-                # print(item_probs)
-                # sample max probability token, if no tokens were legal
-                # simply return most probable in any case
-                item_idx_next = torch.argmax(item_probs, dim=-1, keepdim=True)
-                # print(item_logits.shape)
+                    
+                    # apply softmax to convert logits to (normalized) probabilities
+                    item_probs = F.softmax(item_logits, dim=-1)
+                    # print(item_probs)
+                    # sample max probability token, if no tokens were legal
+                    # simply return most probable in any case
+                    item_idx_next = torch.argmax(item_probs, dim=-1, keepdim=True)
+                    # print(item_logits.shape)
                 next_tokens.append(item_idx_next)
 
             # [print(t.shape) for t in next_tokens]
