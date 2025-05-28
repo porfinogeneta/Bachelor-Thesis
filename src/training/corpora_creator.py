@@ -299,6 +299,17 @@ class CorporaCreator:
             for game_line in standard_corpora:
                 file.write(game_line) 
 
+    def create_apple_corpora(self):
+        """
+            Creates corpora, where apple token is present only if it was recently added,
+            no change in apples state results with a special token <APPLES_UNCHANGED>
+        """
+
+        standard_corpora = self.parse_raw_data_to_tokens()
+
+        for game in standard_corpora:
+            apple_split = re.split(r'(\bA\d{2} bA\d{2} bA\d{2} bA\d{2} bA\d{2}\b)', game)
+
 
     def create_standard_corpora_aligned(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
         """

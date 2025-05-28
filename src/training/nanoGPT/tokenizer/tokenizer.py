@@ -8,7 +8,7 @@ class Tokenizer:
         tail_lengths_tokens = [f"L{l}" for l in range(0, board_width * board_height)] # tail cannot be longer than all available fields - 1
         snake_tokens = ["S0", "S1"]
         apple_tokens = [f"A{i}{j}" for j in range(board_width) for i in range(board_height)]
-        special_tokens = ["<START>", "<END>", "<DEAD>", "<HELPER_TAG>"]
+        special_tokens = ["<START>", "<END>", "<DEAD>", "<HELPER_TAG>", "<APPLES_UNCHANGED>"]
 
         self.all_tokens = special_tokens + snake_tokens + head_position_tokens + tail_lengths_tokens + apple_tokens
 

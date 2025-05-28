@@ -176,4 +176,4 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
 
 
 if __name__ == "__main__":
-    print(main(model_name="out_standard_positions_bs_128", sample_valid_tokens=True, device="cuda"))
+    print(main(model_name="aligned_games/out_aligned_bs_4352", sample_valid_tokens=True, device="cuda"))

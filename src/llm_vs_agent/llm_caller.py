@@ -258,6 +258,16 @@ class LLMCaller:
         # top k is None in the case of legal tokens
         generated_tokens = self.run_lm(prev_heads=prev_heads, game_sequences=game_sequences, legal_tokens=legal_tokens, top_k=None)
 
+        # sanity check, if legal_tokens == [], then model should generate <START>
+        # if legal tokens were provided, then generated element should come from legal tokens
+        for legal_tks, generated_tk in zip(legal_tokens, generated_tokens):
+            if legal_tks == []:
+                assert generated_tk == "<START>"
+            
+            else:
+                assert generated_tk in legal_tks
+            
+
         # logger.info(generated_tokens)
 
         return self.evaluate_sampling_statistics(generated_tokens=generated_tokens, prev_heads=prev_heads)

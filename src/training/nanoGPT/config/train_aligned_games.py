@@ -1,7 +1,7 @@
 # train a miniature character-level shakespeare model
 # good for debugging and playing on macbooks and such
 
-out_dir = 'aligned_games/out_aligned_bs_4352'
+out_dir = 'aligned_games/out_aligned_bs_4352_batch_16'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often
@@ -16,7 +16,7 @@ always_save_checkpoint = False
 dataset = 'aligned_games'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 64
+batch_size = 16
 block_size = 4352
 
 

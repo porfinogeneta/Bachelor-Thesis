@@ -245,7 +245,6 @@ class TournamentManager:
                         batch_scores["incorrect_generations"] += incorrect_generations
 
                         
-                        
                         # logger.info(f"left in batch: {len(batch_moves)}")
                         
                         # Apply LLM moves to each corresponding game
@@ -344,27 +343,27 @@ if __name__ == "__main__":
     # script for finding the best approach for defating each agent
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
-    MODELS = ["out_aligned_games_bs_4372"]
+    MODELS = ["aligned_games/out_aligned_bs_512"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
     AGENTS = ["bfs", "random"]
     # AGENTS = ["bfs"]
 
-    VALID = ["valid", "invalid"]
+    SAMPLE = ["sampling", "no-sampling"]
 
     MODEL_IDX = [1, 0]
 
     for model_name in MODELS:
         for agent_type in AGENTS:
-            for do_sample in VALID:
+            for do_sample in SAMPLE:
                 for model_idx in MODEL_IDX:
 
 
                     manager = TournamentManager(model_name=model_name,
                                                 device="cuda",
-                                                    n_tournaments=1000,
-                                                    batch_size=250)
+                                                    n_tournaments=100,
+                                                    batch_size=100)
 
                     #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
                     output_directory = PROJECT_PATH / TESTING_PATH / model_name / agent_type / do_sample / f"model_idx_{model_idx}"
@@ -372,7 +371,7 @@ if __name__ == "__main__":
                     
                     OUTPUT_FILE = output_directory / "tournaments_results.txt"
 
-                    sample = True if do_sample == "valid" else False
+                    sample = True if do_sample == "sampling" else False
 
                     manager.run_tournaments(output_file=str(OUTPUT_FILE), sample_valid_tokens=sample, agent=agent_type, model_idx=model_idx)
 

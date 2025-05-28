@@ -381,6 +381,9 @@ class GPT(nn.Module):
                 item_legal_tokens = legal_tokens[i]
 
                 # legal token mask for current item
+
+                if not item_legal_tokens:
+                    item_idx_next = torch.tensor([0], device=item_logits.device, dtype=torch.long)
                 # if item_legal_tokens != []:
                 item_legal_tokens_mask = torch.zeros_like(item_logits)
 
