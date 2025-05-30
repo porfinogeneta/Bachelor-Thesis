@@ -101,6 +101,8 @@ int MCTS::rollout(const State& state, int current_snake) {
         cerr << "Error: No rollout policy set!" << endl;
         return 0;
     }
+
+    // premiować w stanie szybsze zjedzenie jabłka, gamma factor
     
     // copy the state
     State* rollout_state = state.deepCopy();

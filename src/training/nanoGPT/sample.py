@@ -139,6 +139,12 @@ from src.training.nanoGPT.model import GPTConfig, GPT
 from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
 from src.consts import NANOGPT_DIR
 import pathlib
+from typing import List
+
+# logger
+from src.logger.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 # # -----------------------------------------------------------------------------
 # init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
@@ -306,7 +312,7 @@ def configure_model(model_name, device):
     return model, ctx
    
 
-def generate_sequences(model, ctx, device, model_name: str, starts, temperature, legal_tokens, top_k):
+def generate_sequences(model, ctx, device, model_name: str, starts, temperature, legal_tokens:  List[List[str]], top_k):
 
     """
         This function is overloaded, if legal tokens are provided, legal token generation is used;
@@ -332,17 +338,24 @@ def generate_sequences(model, ctx, device, model_name: str, starts, temperature,
 
 
     if legal_tokens == None:
+        assert top_k >= 1
         # print("NORMAL GENERATION\n\n")
         # run standard generation
         with torch.no_grad():
             with ctx:
                 y = model.generate(x, max_new_tokens, temperature=temperature, top_k=1)
     else:
+        
+        assert top_k == None
+        # for pos_token in legal_tokens:
 
+        #     print(t)
         # enode legal tokens, [0] since encode returns a list
         encoded_legal_tokens = [[encode(t)[0] for t in token_tuple] for token_tuple in legal_tokens]
+        # logger.info(encoded_legal_tokens)
         # print(encoded_legal_tokens)
         # run generation that excludes tokens
+       
         with torch.no_grad():
             with ctx:
                 y = model.generate_from_legal_tokens(x, max_new_tokens, temperature=temperature, legal_tokens=encoded_legal_tokens)

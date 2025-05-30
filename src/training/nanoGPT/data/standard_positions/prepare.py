@@ -11,8 +11,8 @@ from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
 #     with open(input_file_path, 'w', encoding='utf-8') as f:
 #         f.write(requests.get(data_url).text)
 
-# input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
-input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
+input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
+# input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
 with open(input_file_path, 'r', encoding='utf-8') as f:
     data = f.read().replace("\n", " ")
 n = len(data)

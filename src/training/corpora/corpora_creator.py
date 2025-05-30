@@ -4,7 +4,12 @@ import matplotlib.pyplot as plt
 
 import pathlib
 
-from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K
+from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100
+
+# logger
+from src.logger.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class CorporaCreator:
     """
@@ -131,7 +136,11 @@ class CorporaCreator:
 
 
     def get_statistics(self, corpora_folder: pathlib.Path, stats_of_filename: pathlib.Path):
-
+        """
+            Create statistics for a given corpora.
+            Input arguments are the folder and file paths for
+            the corpora statistics will be based on.
+        """
         games = []
         # each game is written in a separate line
         corpora_path = corpora_folder / stats_of_filename
@@ -185,7 +194,7 @@ class CorporaCreator:
 
 
         stats_file = stats_of_filename.stem + "_stats.txt"
-        with open(corpora_folder / stats_file, 'w') as file:
+        with open(corpora_folder / stats_file, 'w+') as file:
             token_stats = stats['token-wize']
             file.write(f"Total Games: {stats['total_games']}\n"
                     f"Max Game Length: {token_stats['max']}\n"
@@ -299,7 +308,7 @@ class CorporaCreator:
             for game_line in standard_corpora:
                 file.write(game_line) 
 
-    def create_apple_corpora(self):
+    def create_apple_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
         """
             Creates corpora, where apple token is present only if it was recently added,
             no change in apples state results with a special token <APPLES_UNCHANGED>
@@ -307,8 +316,57 @@ class CorporaCreator:
 
         standard_corpora = self.parse_raw_data_to_tokens()
 
+        apple_corpora = []
+
         for game in standard_corpora:
-            apple_split = re.split(r'(\bA\d{2} bA\d{2} bA\d{2} bA\d{2} bA\d{2}\b)', game)
+            tokens = game.split()
+            l = 0
+            prev_apples = []
+            corpline = ""
+
+            while l < len(tokens):
+                r = l
+                while tokens[r].startswith("A"):
+                    r += 1
+                # window of apples was encountered
+                if r != l:
+                    # apples didn't change
+                    if prev_apples == tokens[l:r]:
+                        corpline += " <APPLES_UNCHANGED>"
+                    else:
+                        # apples changed, so just add the apple where they differ as apple
+                        # leave only new apple
+                        diff = list(set(tokens[l:r]) - set(prev_apples))
+                        # logger.debug(prev_apples)
+                        # logger.debug(tokens[l:r])
+                        # logger.debug(diff)
+                        # logger.debug(len(diff))
+                        assert len(diff) == 1 or prev_apples == []
+                        assert diff[0] in tokens[l:r]
+                        assert diff[0] not in prev_apples
+                        corpline += " " + " ".join([elem for elem in diff]) 
+
+
+                    prev_apples = tokens[l:r]
+                    # move window to the first, not apple token
+                    l = r
+                    
+
+                # it wasn't a window of apples, so just add normal token
+                else:
+                    corpline += " " + tokens[l]
+                    l += 1
+
+            apple_corpora.append(corpline)
+
+        with open(output_folder / output_filename, 'w+') as file:
+            for game_line in apple_corpora:
+                file.write(game_line + "\n")
+
+        self.get_statistics(corpora_folder=output_folder, stats_of_filename=output_filename)
+
+        
+
 
 
     def create_standard_corpora_aligned(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
@@ -332,7 +390,7 @@ class CorporaCreator:
 
         
         
-        with open(output_folder / output_filename, 'w') as file:
+        with open(output_folder / output_filename, 'w+') as file:
             for game_line in aligned_corpora:
                 file.write(game_line) 
 
@@ -343,8 +401,13 @@ class CorporaCreator:
 if __name__ == "__main__":
     creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions/")
-    OUT_CORP_FILE = pathlib.Path("standard_positions20kp.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("apples_corpora/")
+    OUT_CORP_FILE = pathlib.Path("apples_corpora20k.txt")
+    
+    creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+
+    # COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions/")
+    # OUT_CORP_FILE = pathlib.Path("standard_positions20kp.txt")
 
     # STANDARD POSITIONS GENERATION
     # creator.create_standard_position_corpora(
@@ -357,9 +420,9 @@ if __name__ == "__main__":
 
     # ALIGNED POSITIONS GENERATOR
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("aligned_games/")
-    OUT_CORP_FILE = pathlib.Path("aligned_games20k.txt")
+    # COPR_DIR = CORPORA_DIR / pathlib.Path("aligned_games/")
+    # OUT_CORP_FILE = pathlib.Path("aligned_games20k.txt")
 
-    creator.create_standard_corpora_aligned(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    # creator.create_standard_corpora_aligned(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
-    creator.get_statistics(corpora_folder=COPR_DIR, stats_of_filename=OUT_CORP_FILE)
+    # creator.get_statistics(corpora_folder=COPR_DIR, stats_of_filename=OUT_CORP_FILE)

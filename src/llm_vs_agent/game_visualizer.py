@@ -46,11 +46,14 @@ SNAKE_HEAD_PUPIL_RADIUS_RATIO = 0.05 # Snake pupil radius relative to cell size
 
 
 class GameVisualizer:
-    def __init__(self, model_idx, board_width=10, board_height=10, cell_size=50): # Reduced cell_size for better fit
+    def __init__(self, model_idx: int, snake_name: str, board_width=10, board_height=10, cell_size=50): # Reduced cell_size for better fit
         self.model_idx = model_idx
         self.board_width = board_width
         self.board_height = board_height
         self.cell_size = cell_size
+
+        # side panel info
+        self.snake_name = snake_name
         
         pygame.init()
         self.font_panel_header = pygame.font.SysFont('Arial', 24, bold=True)
@@ -147,7 +150,7 @@ class GameVisualizer:
             tail_center_y = tail_row * self.cell_size + self.cell_size // 2
             pygame.draw.circle(self.screen, darker_color, (tail_center_x, tail_center_y), segment_radius)
 
-    def draw_side_panel(self, turn, eliminated_snakes_ids, num_total_snakes):
+    def draw_side_panel(self, turn, eliminated_snakes_ids, snakes, num_total_snakes):
         panel_x_start = self.game_board_width
         pygame.draw.rect(self.screen, COLOR_PANEL_BG, (panel_x_start, 0, PANEL_WIDTH, self.window_height))
         
@@ -167,7 +170,7 @@ class GameVisualizer:
         current_y += line_spacing
 
         # Model Controlled Snake
-        model_snake_text = self.font_panel_text.render("Model Snake:", True, COLOR_PANEL_TEXT)
+        model_snake_text = self.font_panel_text.render(f"{self.snake_name}:", True, COLOR_PANEL_TEXT)
         self.screen.blit(model_snake_text, (panel_x_start + 20, current_y))
         current_y += small_line_spacing
         
@@ -177,6 +180,32 @@ class GameVisualizer:
         self.screen.blit(model_id_text, (panel_x_start + 25 + color_swatch_size + 5, current_y -2)) # Slightly adjust y for alignment
         current_y += line_spacing
 
+        # Scores (Tail Lengths)
+        scores_header_text = self.font_panel_text.render("Scores:", True, COLOR_PANEL_TEXT)
+        self.screen.blit(scores_header_text, (panel_x_start + 20, current_y))
+        current_y += self.font_panel_text.get_height() + 5  # Add some padding after the header
+
+        # Add a separator line
+        pygame.draw.line(self.screen, COLOR_PANEL_TEXT, (panel_x_start + 15, current_y), (self.window_width - 15, current_y), 1)
+        current_y += 10 # More padding after the line
+
+        for i, s in enumerate(snakes):
+            # Get the snake's color
+            snake_color = self.get_snake_color(i)
+
+            # Display the color swatch
+            pygame.draw.rect(self.screen, snake_color, (panel_x_start + 25, current_y, color_swatch_size, color_swatch_size))
+
+            # Create and position the tail length text
+            tail_length_text = self.font_panel_text.render(f"{len(s.tail)}", True, COLOR_PANEL_TEXT)
+            text_rect = tail_length_text.get_rect(left = panel_x_start + 25 + color_swatch_size + 10, centery = current_y + color_swatch_size / 2)
+            self.screen.blit(tail_length_text, text_rect)
+
+            # Increment y-position for the next snake's score
+            current_y += color_swatch_size + 5 # Ensure enough space between entries
+
+        # Add a larger gap before the next section
+        current_y += 20
         # Active Snakes (Optional, could be many)
         # active_snakes_text = self.font_panel_text.render("Active Snakes:", True, COLOR_PANEL_TEXT)
         # self.screen.blit(active_snakes_text, (panel_x_start + 20, current_y))
@@ -191,24 +220,24 @@ class GameVisualizer:
         #         current_y += small_line_spacing
         # current_y += 10 # Extra space
 
-        # Eliminated Snakes
-        elim_header_text = self.font_panel_text.render("Eliminated Snakes:", True, COLOR_PANEL_TEXT)
-        self.screen.blit(elim_header_text, (panel_x_start + 20, current_y))
-        current_y += small_line_spacing
+        # # Eliminated Snakes
+        # elim_header_text = self.font_panel_text.render("Eliminated Snakes:", True, COLOR_PANEL_TEXT)
+        # self.screen.blit(elim_header_text, (panel_x_start + 20, current_y))
+        # current_y += small_line_spacing
         
-        if eliminated_snakes_ids:
-            for snake_id in eliminated_snakes_ids:
-                if current_y + small_line_spacing > self.window_height - 20: # Avoid drawing off panel
-                    break
-                elim_snake_color = self.get_snake_color(snake_id)
-                pygame.draw.rect(self.screen, elim_snake_color, (panel_x_start + 25, current_y, color_swatch_size, color_swatch_size))
-                elim_id_text = self.font_panel_text.render(f" ID: {snake_id}", True, COLOR_PANEL_TEXT)
-                self.screen.blit(elim_id_text, (panel_x_start + 25 + color_swatch_size + 5, current_y-2))
-                current_y += small_line_spacing
-        else:
-            none_text = self.font_panel_text.render("  None", True, COLOR_PANEL_TEXT)
-            self.screen.blit(none_text, (panel_x_start + 20, current_y))
-            current_y += small_line_spacing
+        # if eliminated_snakes_ids:
+        #     for snake_id in eliminated_snakes_ids:
+        #         if current_y + small_line_spacing > self.window_height - 20: # Avoid drawing off panel
+        #             break
+        #         elim_snake_color = self.get_snake_color(snake_id)
+        #         pygame.draw.rect(self.screen, elim_snake_color, (panel_x_start + 25, current_y, color_swatch_size, color_swatch_size))
+        #         elim_id_text = self.font_panel_text.render(f" ID: {snake_id}", True, COLOR_PANEL_TEXT)
+        #         self.screen.blit(elim_id_text, (panel_x_start + 25 + color_swatch_size + 5, current_y-2))
+        #         current_y += small_line_spacing
+        # else:
+        #     none_text = self.font_panel_text.render("  None", True, COLOR_PANEL_TEXT)
+        #     self.screen.blit(none_text, (panel_x_start + 20, current_y))
+        #     current_y += small_line_spacing
 
 
     def visualize_state(self, state):
@@ -237,7 +266,7 @@ class GameVisualizer:
         # Draw the side panel
         # We need to know the total number of snakes that started to list all, or just use IDs from state.snakes
         num_total_snakes_in_current_state = len(state.snakes) # This might not be the initial total
-        self.draw_side_panel(state.turn, state.eliminated_snakes, num_total_snakes_in_current_state) # Pass necessary info
+        self.draw_side_panel(state.turn, state.eliminated_snakes, state.snakes, num_total_snakes_in_current_state) # Pass necessary info
         
         pygame.display.flip()
         self.clock.tick(10) # Increased FPS slightly for smoother visuals

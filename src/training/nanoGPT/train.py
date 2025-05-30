@@ -151,7 +151,7 @@ if init_from == 'scratch':
     print("Initializing a new model from scratch")
     # determine the vocab size we'll use for from-scratch training
     if meta_vocab_size is None:
-        print("defaulting to vocab_size of our transformer to 384 (351 rounded up for efficiency)")
+        print("defaulting to vocab_size of our transformer to 384")
     model_args['vocab_size'] = meta_vocab_size if meta_vocab_size is not None else tokenizer.get_tokens_size()
     gptconf = GPTConfig(**model_args)
     model = GPT(gptconf)

@@ -340,7 +340,7 @@ class GPT(nn.Module):
             # optionally crop the logits to only the top k options
             if top_k is not None:
                 v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
-                logits[logits < v[:, [-1]]] = -float('Inf')
+                logits[logits < v[:, [-1]]] = -float('inf')
             # apply softmax to convert logits to (normalized) probabilities
             probs = F.softmax(logits, dim=-1)
 
@@ -401,6 +401,7 @@ class GPT(nn.Module):
                     # sample max probability token, if no tokens were legal
                     # simply return most probable in any case
                     item_idx_next = torch.argmax(item_probs, dim=-1, keepdim=True)
+                    # item_idx_next = torch.multinomial(item_probs, num_samples=1)
                     # print(item_logits.shape)
                 next_tokens.append(item_idx_next)
 

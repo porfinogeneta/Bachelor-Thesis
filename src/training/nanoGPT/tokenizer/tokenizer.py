@@ -8,15 +8,27 @@ class Tokenizer:
         tail_lengths_tokens = [f"L{l}" for l in range(0, board_width * board_height)] # tail cannot be longer than all available fields - 1
         snake_tokens = ["S0", "S1"]
         apple_tokens = [f"A{i}{j}" for j in range(board_width) for i in range(board_height)]
-        special_tokens = ["<START>", "<END>", "<DEAD>", "<HELPER_TAG>", "<APPLES_UNCHANGED>"]
+        special_tokens = ["<START>", "<END>", "<DEAD>", "<HELPER_TAG>"]
 
         self.all_tokens = special_tokens + snake_tokens + head_position_tokens + tail_lengths_tokens + apple_tokens
 
         # add special tokens for 64 training padding
         current_len = len(self.all_tokens)
         to_add = 64 - (current_len % 64)
+
+        CORPORA_EXTENSION_TOKENS = ["<APPLES_UNCHANGED>", "<TAIL_END>"] 
+
+        to_add -= len(CORPORA_EXTENSION_TOKENS)
+
+        assert to_add > 0
+
         for i in range(to_add):
             self.all_tokens.append(f"<padding_token_{i}>")
+
+        # we don't want to retrain everything, so let's just include extension tokens 
+        # as the last ones
+        for ext_token in CORPORA_EXTENSION_TOKENS:
+            self.all_tokens.append(ext_token)
 
         # encoding dictionary -> put number for a specific string
         self.stoi = {token_str: i for i, token_str in enumerate(self.all_tokens)}
