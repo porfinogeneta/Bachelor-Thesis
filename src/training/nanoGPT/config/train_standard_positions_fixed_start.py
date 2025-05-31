@@ -1,7 +1,7 @@
 # train a miniature character-level shakespeare model
 # good for debugging and playing on macbooks and such
 
-out_dir = 'aligned_games/out_aligned_bs_4352_batch_16'
+out_dir = 'standard_positions_fixed_start/out_aligned_bs_4352'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often
@@ -13,10 +13,10 @@ always_save_checkpoint = False
 # wandb_project = 'standard_positions'
 # wandb_run_name = 'mini-gpt'
 
-dataset = 'aligned_games'
+dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 16
+batch_size = 128
 block_size = 4352
 
 

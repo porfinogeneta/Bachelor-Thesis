@@ -4,7 +4,7 @@
 
 # python3 train.py --out_dir="out_standard_positions_bs_1600" --dataset="standard_positions" --compile=True --device="cuda"  config/train_standard_positions.py | tee "/home/ubuntu/Bachelor-Thesis/src/training/train_configs/standard_positions/out_standard_positions_bs_1600.txt"
 
-out_dir = 'out_standard_positions_bs_2240'
+out_dir = 'standard_positions/out_standard_positions_bs_4352'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often
@@ -19,8 +19,8 @@ always_save_checkpoint = False
 dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 256
-block_size = 2240 # context of up to 2816 previous characters
+batch_size = 128
+block_size = 4352 # context of up to 2816 previous characters
 # batch_size = 64
 # block_size = 2866 # context of up to 2816 previous characters
 

@@ -122,24 +122,24 @@ def get_batch(split):
         data = np.memmap(os.path.join(data_dir, 'val.bin'), dtype=np.uint16, mode='r')
 
     # line length in a single game
-    # start_token_indices = np.where(data == 0)[0]
-    # start_tensor = torch.from_numpy(start_token_indices)
+    start_token_indices = np.where(data == 0)
+    start_tensor = torch.from_numpy(start_token_indices)
 
-    # find all start positions, i.e. positions that are divisible by 4362
-    GAME_LENGTH = 4362
-    # arr = np.arange(0, len(data))
-    # start_indices = arr[arr % GAME_LENGTH == 0]
+    # # find all start positions, i.e. positions that are divisible by 4362
+    # GAME_LENGTH = 4362
+    # # arr = np.arange(0, len(data))
+    # # start_indices = arr[arr % GAME_LENGTH == 0]
+    # # start_tensor = torch.from_numpy(start_indices)
+
+    # start_indices = np.arange(0, len(data), GAME_LENGTH)
     # start_tensor = torch.from_numpy(start_indices)
-
-    start_indices = np.arange(0, len(data), GAME_LENGTH)
-    start_tensor = torch.from_numpy(start_indices)
 
 
     
-    # sanity check if all the start positions are divisible by GAME_LENGTH
-    assert torch.all(start_tensor % GAME_LENGTH == 0), "Not all start positions are divisible by 4362"
+    # # sanity check if all the start positions are divisible by GAME_LENGTH
+    # assert torch.all(start_tensor % GAME_LENGTH == 0), "Not all start positions are divisible by 4362"
     # sanity check if all positions that are divisible by 4362 are actually start positions
-    assert np.all(data[start_indices] == 0), "Not all positions divisible by 4362 are start positions"    
+    assert np.all(data[start_token_indices] == 0), "Not all positions extractet by numpy are 0"    
     
     # values_at_starts = data[start_indices]
     # non_zero_mask = values_at_starts != 0

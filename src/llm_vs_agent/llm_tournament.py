@@ -344,11 +344,11 @@ if __name__ == "__main__":
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
-    MODELS = ["aligned_games/out_aligned_bs_4352_batch_16"]
+    MODELS = ["standard_positions/out_standard_positions_bs_4352"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
-    AGENTS = ["bfs", "random"]
+    AGENTS = ["bfs"]
     # AGENTS = ["bfs"]
 
     SAMPLE = ["sampling", "no-sampling"]
