@@ -37,8 +37,8 @@ private:
     function<char(const State&, int)> rollout_policy;
     
     void expand_node(MCTSNode* node);
-    int rollout(const State& state, int current_snake);
-    void backpropagate(int result, MCTSNode* current);
+    int rollout(const State& state, int current_snake, int* passed_turns);
+    void backpropagate(int rollout_winner, double score_for_winners, MCTSNode* current);
     MCTSNode* select_best_child(MCTSNode* node, int main_player);
     
 public:

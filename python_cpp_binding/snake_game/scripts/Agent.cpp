@@ -251,7 +251,7 @@ char Agent::mcts_based_agent(
             )
         {
             MCTS mcts;
-            mcts.set_rollout_policy([this](const State& s, int idx) { return random_based_agent(s, idx); });
+            mcts.set_rollout_policy([this](const State& s, int idx) { return bfs_based_agent(s, idx); });
             return mcts.find_best_move(state, current_snake_idx, iterations);
         }
     

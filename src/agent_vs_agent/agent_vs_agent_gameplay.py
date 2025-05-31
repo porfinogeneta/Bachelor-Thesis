@@ -2,13 +2,10 @@
 from src.llm_vs_agent.game_visualizer import GameVisualizer
 
 import sys
-import os
 # visualizer
 # from src.snake_game.game_visualizer import GameVisualizer
 from src.llm_vs_agent.game_visualizer import GameVisualizer
 
-# llm caller
-from src.llm_vs_agent.llm_caller import LLMCaller
 
 # logger
 from src.logger.logger import setup_logger
@@ -57,7 +54,7 @@ def main():
 
     if visualize:
         # game visualizer
-        visualizer = GameVisualizer(model_idx=MCTS_IDX)
+        visualizer = GameVisualizer(model_idx=MCTS_IDX, snake_name="MCTS")
 
     
 
@@ -73,23 +70,24 @@ def main():
              else:
                  return "MCTS", state
 
-        # agent's snake is longer and llm's is dead, no point of further gameplay
-        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MCTS_IDX].tail) and (MCTS_IDX in state.eliminated_snakes):
-            return "agent", state
-        # llm's is longer and agent's is dead
-        elif len(state.snakes[MCTS_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
-            return "MCTS", state
+        # # agent's snake is longer and llm's is dead, no point of further gameplay
+        # if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MCTS_IDX].tail) and (MCTS_IDX in state.eliminated_snakes):
+        #     return "agent", state
+        # # llm's is longer and agent's is dead
+        # elif len(state.snakes[MCTS_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
+        #     return "MCTS", state
             
         # python is snake 1
         snake_moving_idx = state.turn % n_snakes
 
         if snake_moving_idx == MCTS_IDX:
-
-            if sum([len(state.snakes[i].tail) for i in range(n_snakes)]) // state.n_snakes <= 5:
-                # if the average length of snakes is 7, use BFS
-                direction = agent.bfs_based_agent(state, MCTS_IDX)
-            else:
-                direction = agent.mcts_based_agent(state, MCTS_IDX, 1000)
+            
+            direction = agent.mcts_based_agent(state, MCTS_IDX, 1000)
+            # if sum([len(state.snakes[i].tail) for i in range(n_snakes)]) // state.n_snakes <= 5:
+            #     # if the average length of snakes is 7, use BFS
+            #     direction = agent.bfs_based_agent(state, MCTS_IDX)
+            # else:
+            #     direction = agent.mcts_based_agent(state, MCTS_IDX, 1000)
   
             # given direction move
             state.move(direction, MCTS_IDX)
@@ -102,9 +100,13 @@ def main():
             # given direction move
             state.move(direction, AGENT_IDX)
 
-    
-        
+    if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MCTS_IDX].tail):
+        return "agent", state
+    else:
+        return "MCTS", state
 
+    
+    
 
 if __name__ == "__main__":
     print(main())

@@ -427,13 +427,12 @@ bool State::move_without_apples_changed(char direction, int snake_moving_idx) {
 // all snakes eliminated => game over
 bool State::is_game_over() {
     
-    // // print eliminated snakes
-    // for (const auto& snake : eliminated_snakes) {
-    //     cout << "Snake " << snake << " is eliminated." << endl;
-    // }
-    if (eliminated_snakes.size() == n_snakes) {
+    // all snakes eliminated, no point of game continuation
+    // game is played for over 1000 rounds, just finish it
+    if (eliminated_snakes.size() == n_snakes || turn >= MAX_GAME_LENGTH) {
         return true; // all snakes are eliminated
     }
+
 
     vector<int> living_snakes;
     for (size_t i = 0; i < snakes.size(); i++) {
@@ -459,6 +458,11 @@ bool State::is_game_over() {
     return false;
 }
 
+const int GROWTH_PER_SEGMENT = 15;
+const int KILL_OPPONENT_BONUS = 30;
+const int DEATH_PENALTY = -10;
+const int CLOSE_TO_APPLE = 10;
+
 int State::get_winner(const State& prev_state) {
     // returns the index of winning snake or -1 if no winner yet
     // winner is calculated based on scores
@@ -466,37 +470,68 @@ int State::get_winner(const State& prev_state) {
     int snake_0_score = 0;
     int snake_1_score = 0;
 
-    // highest score if the snake grows
+    // if snake grows in the current rollout increase it's points
+    // by the amount of segments it grew
     // if snake 0 grew
     if (prev_state.snakes[0].tail.size() < snakes[0].tail.size()) {
-        snake_0_score += 1000;
+        snake_0_score += GROWTH_PER_SEGMENT * (snakes[0].tail.size() - prev_state.snakes[0].tail.size());
     }
     if (prev_state.snakes[1].tail.size() < snakes[1].tail.size()) {
-        snake_1_score += 1000;
+        snake_1_score += GROWTH_PER_SEGMENT * (snakes[1].tail.size() - prev_state.snakes[1].tail.size());
     }
 
-    // which snake is closer to all apples
-    for (const Apple& apple : apples) {
-        // distance to the apple for snake 0
-        int dist_0 = abs(snakes[0].head.first - apple.position.first) + abs(snakes[0].head.second - apple.position.second);
-        // distance to the apple for snake 1
-        int dist_1 = abs(snakes[1].head.first - apple.position.first) + abs(snakes[1].head.second - apple.position.second);
-        
-        if (dist_0 < dist_1) {
-            snake_0_score += 100;
-        } else if (dist_1 < dist_0) {
-            snake_1_score += 100;
+
+    if (!apples.empty()){
+        // get nearest distance to an apple
+        int min_dist_0 = numeric_limits<int>::max();
+        int min_dist_1 = numeric_limits<int>::max();
+
+        // which snake is closer to any apple
+        for (const Apple& apple : apples) {
+            // change apples scores only for living snakes
+            if (eliminated_snakes.find(0) == eliminated_snakes.end()){
+                min_dist_0 = min(min_dist_0, abs(snakes[0].head.first - apple.position.first) + abs(snakes[0].head.second - apple.position.second));
+            }else if (eliminated_snakes.find(1) == eliminated_snakes.end()) {
+                min_dist_1 = min(min_dist_0, abs(snakes[1].head.first - apple.position.first) + abs(snakes[1].head.second - apple.position.second));
+            }
+        }
+
+        if (min_dist_0 < min_dist_1){
+            snake_0_score += CLOSE_TO_APPLE;
+
+            // if snake is like 2 fields from apple add close again
+            if (min_dist_0 <= 2){
+                snake_0_score += CLOSE_TO_APPLE;
+            }
+        }else if (min_dist_1 < min_dist_0){
+            snake_1_score += CLOSE_TO_APPLE;
+
+            if (min_dist_1 <= 2){
+                snake_1_score += CLOSE_TO_APPLE;
+            }
         }
     }
 
-    // if snake with a move kills the other snake, it gets 10000 points
-    if (prev_state.eliminated_snakes.find(1) == prev_state.eliminated_snakes.end() && 
-        eliminated_snakes.find(1) != eliminated_snakes.end()) {
-        snake_0_score += 10000;
-    }
-    if (prev_state.eliminated_snakes.find(0) == prev_state.eliminated_snakes.end() && 
-        eliminated_snakes.find(0) != eliminated_snakes.end()) {
-        snake_1_score += 10000;
+    // find out which snake died in this state
+    bool is_snake_0_dead_now = prev_state.eliminated_snakes.find(0) == prev_state.eliminated_snakes.end() && 
+        eliminated_snakes.find(0) != eliminated_snakes.end();
+    
+    bool is_snake_1_dead_now = prev_state.eliminated_snakes.find(1) == prev_state.eliminated_snakes.end() && 
+        eliminated_snakes.find(1) != eliminated_snakes.end();
+    
+    if (is_snake_0_dead_now){
+        // discourage death of snake, substract points
+        snake_0_score += DEATH_PENALTY;
+        // if snake_1 is still alive give it points for killing
+        if (eliminated_snakes.find(1) == eliminated_snakes.end()){
+            snake_1_score += KILL_OPPONENT_BONUS;
+        }
+    }else if (is_snake_1_dead_now) {
+        snake_1_score += DEATH_PENALTY;
+        // if snake_0 is still alive give it points for killing
+        if (eliminated_snakes.find(0) == eliminated_snakes.end()){
+            snake_0_score += KILL_OPPONENT_BONUS;
+        }
     }
 
     if (snake_0_score > snake_1_score) {

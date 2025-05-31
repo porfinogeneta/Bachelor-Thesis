@@ -93,8 +93,8 @@ void MCTS::expand_node(MCTSNode* node) {
     }
 }
 
-int MCTS::rollout(const State& state, int current_snake) {
-    cout << "ROLLOUT" << endl;
+int MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
+    // cout << "ROLLOUT" << endl;
     // Perform a rollout from the given state using the rollout policy
     // returns the index of the winning snake or -1 if no winner
     if (!rollout_policy) {
@@ -111,7 +111,7 @@ int MCTS::rollout(const State& state, int current_snake) {
     int snake_turn = current_snake;
     
     while (!rollout_state->is_game_over()
-            && rollout_state->turn < 50 \
+            && rollout_state->turn < 300 \
             && !rollout_state->apples.empty())
     
     {
@@ -128,7 +128,11 @@ int MCTS::rollout(const State& state, int current_snake) {
         // cout << "Next snake index: " << snake_turn << endl;
     }
 
+    // returns 0 on S0 winning
+    // 1 on S1 winning
+    // -1 on tie
     int winner = rollout_state->get_winner(*prev_state);
+    *passed_turns = rollout_state->turn - prev_state->turn;
 
     delete rollout_state; // clean up the allocated memory
     delete prev_state; // clean up the allocated memory
@@ -136,19 +140,17 @@ int MCTS::rollout(const State& state, int current_snake) {
     return winner;
 }
 
-void MCTS::backpropagate(int rollout_result, MCTSNode* current) {
-    cout << "BACKPROPAGATE" << endl;
+void MCTS::backpropagate(int rollout_winner, double score_for_winners, MCTSNode* current) {
+    // cout << "BACKPROPAGATE" << endl;
     while (current != nullptr) {
         current->total_games++;
         
         // update wins only if the winning snake is the one, whose turn is in the current node
-        if (rollout_result == current->current_snake_idx) {
-            if (rollout_result == -1){
-                // current->wins += 0.5; // tie case
-            }else {
-                current->wins += 1.0; // current snake won
-            }
+        if (rollout_winner == current->current_snake_idx) {
+            // increase by a given score, assosiated with how quicly the win was achived
+            current->wins += score_for_winners; // current snake won
         }
+       
         
         // climb up the tree
         current = current->parent;
@@ -185,7 +187,7 @@ MCTSNode* MCTS::select_best_child(MCTSNode* node, int main_player) {
 void MCTS::perform_iteration(int main_player) {
     MCTSNode* current = root;
     
-    cout << "SELECTION" << endl;
+    // cout << "SELECTION" << endl;
     // Selection - traverse down the tree using UCB
     while (!current->children.empty()) {
         current = select_best_child(current, main_player);
@@ -201,12 +203,18 @@ void MCTS::perform_iteration(int main_player) {
     }
     
     // Rollout - simulate game till the end, using the rollout policy
-    int result = rollout(*current->node_state, current->current_snake_idx);
+    int passed_turns;
+    int rollout_winner = rollout(*current->node_state, current->current_snake_idx, &passed_turns);
     
     // Backpropagation - update statistics up the tree
     // increase nominator only for current snake idx
     // increase denominator for all snakes
-    backpropagate(result, current);
+
+    // give higher score for the sanke that won faster, made more greedy moves toward winning
+    double score_for_winners = 1.0 * exp(-(passed_turns));
+
+
+    backpropagate(rollout_winner, score_for_winners, current);
 }
 
 char MCTS::find_best_move(const State& state, int snake_idx, int iterations) {
