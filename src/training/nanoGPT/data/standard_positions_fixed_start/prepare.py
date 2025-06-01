@@ -12,8 +12,8 @@ from src.consts import TRAIN_VAL_SPLIT, GAMES_IN_RAW_FILE
 #     with open(input_file_path, 'w', encoding='utf-8') as f:
 #         f.write(requests.get(data_url).text)
 
-# input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
-input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/standard_positions_fixed_start/standard_positions_fixed_start.txt"
+input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions_fixed_start/standard_positions_fixed_start.txt"
+# input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/standard_positions_fixed_start/standard_positions_fixed_start.txt"
 with open(input_file_path, 'r', encoding='utf-8') as f:
     data = f.read().replace("\n", " ")
 n = len(data)

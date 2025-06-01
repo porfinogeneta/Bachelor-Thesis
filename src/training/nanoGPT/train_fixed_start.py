@@ -121,9 +121,11 @@ def get_batch(split):
     else:
         data = np.memmap(os.path.join(data_dir, 'val.bin'), dtype=np.uint16, mode='r')
 
-    # line length in a single game
-    start_token_indices = np.where(data == 0)
-    start_tensor = torch.from_numpy(start_token_indices[0])
+    # gather all start tokens
+    all_start_token_indices = np.where(data == 0)[0]
+    # get games that that fit in the context window
+    valid_start_indices_np = all_start_token_indices[all_start_token_indices <= len(data) - 1 - block_size]
+    start_tensor = torch.from_numpy(valid_start_indices_np)
 
     # # find all start positions, i.e. positions that are divisible by 4362
     # GAME_LENGTH = 4362
@@ -139,7 +141,7 @@ def get_batch(split):
     # # sanity check if all the start positions are divisible by GAME_LENGTH
     # assert torch.all(start_tensor % GAME_LENGTH == 0), "Not all start positions are divisible by 4362"
     # sanity check if all positions that are divisible by 4362 are actually start positions
-    assert np.all(data[start_token_indices[0]] == 0), "Not all positions extractet by numpy are 0"    
+    assert np.all(data[valid_start_indices_np[0]] == 0), "Not all positions extractet by numpy are 0"    
     
 
     # ix = torch.randint(start_token_indices, (batch_size,))
