@@ -123,7 +123,7 @@ def get_batch(split):
 
     # line length in a single game
     start_token_indices = np.where(data == 0)
-    start_tensor = torch.from_numpy(start_token_indices)
+    start_tensor = torch.from_numpy(start_token_indices[0])
 
     # # find all start positions, i.e. positions that are divisible by 4362
     # GAME_LENGTH = 4362
@@ -139,29 +139,13 @@ def get_batch(split):
     # # sanity check if all the start positions are divisible by GAME_LENGTH
     # assert torch.all(start_tensor % GAME_LENGTH == 0), "Not all start positions are divisible by 4362"
     # sanity check if all positions that are divisible by 4362 are actually start positions
-    assert np.all(data[start_token_indices] == 0), "Not all positions extractet by numpy are 0"    
+    assert np.all(data[start_token_indices[0]] == 0), "Not all positions extractet by numpy are 0"    
     
-    # values_at_starts = data[start_indices]
-    # non_zero_mask = values_at_starts != 0
-    # if np.any(non_zero_mask):
-    #     print(split)
-    #     non_zero_indices = start_indices[non_zero_mask]
-    #     non_zero_values = values_at_starts[non_zero_mask]
-    #     print(f"Found {len(non_zero_indices)} positions divisible by 4362 that are NOT start positions (value != 0):")
-    #     for idx, val in zip(non_zero_indices[:10], non_zero_values[:10]):  # Show first 10
-    #         print(f"  Index {idx}: value = {val}")
-    #     if len(non_zero_indices) > 10:
-    #         print(f"  ... and {len(non_zero_indices) - 10} more")
-    #     assert False, f"Not all positions divisible by 4362 are start positions. Found {len(non_zero_indices)} non-zero values."
-    # else:
-    #     pass
-    #     # print(f"✓ All {len(start_indices)} positions divisible by 4362 are start positions (value == 0)")
-    
-
 
     # ix = torch.randint(start_token_indices, (batch_size,))
     # choose samples indices uniformly at random
     indices = torch.randperm(start_tensor.size(0))[:batch_size]
+    print(indices)
     # use chosen indices to select start positions in the data
     ix = start_tensor[indices]
     # not_divisible_elements = ix[ix % 4362 != 0]

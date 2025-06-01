@@ -16,8 +16,8 @@ always_save_checkpoint = False
 dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 128
-block_size = 4352
+batch_size = 2
+block_size = 64
 
 
 # baby GPT model :)
