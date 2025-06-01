@@ -13,7 +13,7 @@ always_save_checkpoint = False
 # wandb_project = 'standard_positions'
 # wandb_run_name = 'mini-gpt'
 
-dataset = 'standard_positions_fixed_start'
+dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
 batch_size = 128

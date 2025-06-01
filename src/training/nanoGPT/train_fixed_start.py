@@ -123,36 +123,20 @@ def get_batch(split):
 
     # gather all start tokens
     all_start_token_indices = np.where(data == 0)[0]
-    # get games that that fit in the context window
+    # get games that that fit in the context window (for both x and y)
     valid_start_indices_np = all_start_token_indices[all_start_token_indices <= len(data) - 1 - block_size]
     start_tensor = torch.from_numpy(valid_start_indices_np)
 
-    # # find all start positions, i.e. positions that are divisible by 4362
-    # GAME_LENGTH = 4362
-    # # arr = np.arange(0, len(data))
-    # # start_indices = arr[arr % GAME_LENGTH == 0]
-    # # start_tensor = torch.from_numpy(start_indices)
-
-    # start_indices = np.arange(0, len(data), GAME_LENGTH)
-    # start_tensor = torch.from_numpy(start_indices)
-
-
     
-    # # sanity check if all the start positions are divisible by GAME_LENGTH
-    # assert torch.all(start_tensor % GAME_LENGTH == 0), "Not all start positions are divisible by 4362"
     # sanity check if all positions that are divisible by 4362 are actually start positions
     assert np.all(data[valid_start_indices_np[0]] == 0), "Not all positions extractet by numpy are 0"    
     
 
-    # ix = torch.randint(start_token_indices, (batch_size,))
     # choose samples indices uniformly at random
     indices = torch.randperm(start_tensor.size(0))[:batch_size]
-    # print(indices)
-    # use chosen indices to select start positions in the data
+ 
     ix = start_tensor[indices]
-    # not_divisible_elements = ix[ix % 4362 != 0]
-    # if not_divisible_elements.size(0) > 0:
-    #     print(not_divisible_elements)
+ 
     x = torch.stack([torch.from_numpy((data[i:i+block_size]).astype(np.int64)) for i in ix])
     y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size]).astype(np.int64)) for i in ix])
     
