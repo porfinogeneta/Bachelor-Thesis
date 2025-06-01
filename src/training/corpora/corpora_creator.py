@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 import pathlib
 
-from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100
+from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT
 
 # logger
 from src.logger.logger import setup_logger
@@ -369,30 +369,62 @@ class CorporaCreator:
 
 
 
-    def create_standard_corpora_aligned(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
+    def create_standard_corpora_fixed_start(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
         """
-            Creates corpora similar to standard version, but everything is aligned to the longest game.
+            Creates standard corpora, but the last game gets a padding to be aligned to the longest game length.
         """
-        
+
+
         standard_corpora = self.parse_raw_data_to_tokens()
 
-        aligned_corpora = []
+        fixed_start_corpora = []
 
         # extract max length
         max_len = max(len(game.split()) for game in standard_corpora)
 
-        # fill each line with padding_tokens so each line is of the same length
-        for game in standard_corpora:
+        one_before_split_point = int(GAMES_IN_RAW_FILE * TRAIN_VAL_SPLIT) - 1
+
+        for i, game in  enumerate(standard_corpora):
             game_len = len(game.split())
             fill_in_length = max_len - game_len
-            padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
-            aligned_corpora.append(game.strip() + f" {padding_tokens_fill}\n")
+            padding_tokens_fill = ""
+            # add padding to the last game in train and val split
+            if (i == len(standard_corpora) - 1 or i == one_before_split_point):
+                padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
+            fixed_start_corpora.append(game.strip() + f" {padding_tokens_fill}")
+        
+
+        assert len(fixed_start_corpora[-1].split()) == max_len, "This function should add proper padding"
+        
+        with open(output_folder / output_filename, 'w+') as file:
+            for game_line in fixed_start_corpora:
+                file.write(game_line.strip() + "\n") 
+
+
+
+        # """
+        #     Creates corpora similar to standard version, but everything is aligned to the longest game.
+        # """
+        
+        # standard_corpora = self.parse_raw_data_to_tokens()
+
+        # aligned_corpora = []
+
+        # # extract max length
+        # max_len = max(len(game.split()) for game in standard_corpora)
+
+        # # fill each line with padding_tokens so each line is of the same length
+        # for game in standard_corpora:
+        #     game_len = len(game.split())
+        #     fill_in_length = max_len - game_len
+        #     padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
+        #     aligned_corpora.append(game.strip() + f" {padding_tokens_fill}\n")
 
         
         
-        with open(output_folder / output_filename, 'w+') as file:
-            for game_line in aligned_corpora:
-                file.write(game_line) 
+        # with open(output_folder / output_filename, 'w+') as file:
+        #     for game_line in aligned_corpora:
+        #         file.write(game_line) 
 
 
 
@@ -401,10 +433,12 @@ class CorporaCreator:
 if __name__ == "__main__":
     creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("apples_corpora/")
-    OUT_CORP_FILE = pathlib.Path("apples_corpora20k.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions_fixed_start/")
+    OUT_CORP_FILE = pathlib.Path("standard_positions_fixed_start.txt")
     
-    creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+
+    creator.create_standard_corpora_fixed_start(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
     # COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions/")
     # OUT_CORP_FILE = pathlib.Path("standard_positions20kp.txt")

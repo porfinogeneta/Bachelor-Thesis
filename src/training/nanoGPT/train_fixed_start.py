@@ -145,7 +145,7 @@ def get_batch(split):
     # ix = torch.randint(start_token_indices, (batch_size,))
     # choose samples indices uniformly at random
     indices = torch.randperm(start_tensor.size(0))[:batch_size]
-    print(indices)
+    # print(indices)
     # use chosen indices to select start positions in the data
     ix = start_tensor[indices]
     # not_divisible_elements = ix[ix % 4362 != 0]
