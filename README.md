@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 pip install -e .
 
-
+watch -n 0.5 nvidia-smi
 
 
 
