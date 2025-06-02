@@ -71,6 +71,9 @@ class TournamentManager:
         game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
         game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
         game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+
+        # cpy = self.create_game_sequence("", None, state)
+        # assert cpy == game_sequence, "Created sequence should be the same"
         
         self.games.append(GameState(
             game_id=game_id,
@@ -81,15 +84,16 @@ class TournamentManager:
         ))
 
 
-    def create_game_sequence(self, corpora_type: str, prev_state: snake_lib.State, current_state: snake_lib.State):
+    def create_game_sequence(self, game_sequence: str, prev_state: snake_lib.State, current_state: snake_lib.State):
         """
             Game sequence should be created based on model type, since each model may accept different game sequence
         """
-        if corpora_type == "standard_positions":
+        if self.corpora_type == "standard_positions":
 
             # initializing sequence
             if prev_state == None:
-                game_sequence = ""
+                assert game_sequence == "", "At the beginning game sequence shouldn't be empty"
+                game_sequence = "<START> "
                 game_sequence += f"S0 R{current_state.snakes[0].head[0]}C{current_state.snakes[0].head[1]} L{len(current_state.snakes[0].tail)} "
                 game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples]) + " "
                 game_sequence += f"S1 R{current_state.snakes[1].head[0]}C{current_state.snakes[1].head[1]} L{len(current_state.snakes[1].tail)} "
@@ -102,16 +106,16 @@ class TournamentManager:
             if currently_moving_snake_idx in current_state.eliminated_snakes:
                 apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples])
                 # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
-                return f"S{currently_moving_snake_idx} <DEAD> L{len(current_state.snakes[currently_moving_snake_idx].tail)} {apple_positions} "
+                game_sequence += f"S{currently_moving_snake_idx} <DEAD> L{len(current_state.snakes[currently_moving_snake_idx].tail)} {apple_positions} "
+                return game_sequence
             # normal sequence filling
             else:
-                game_sequence = ""
                 game_sequence += f"S{currently_moving_snake_idx} R{current_state.snakes[currently_moving_snake_idx].head[0]}C{current_state.snakes[currently_moving_snake_idx].head[1]} L{len(current_state.snakes[currently_moving_snake_idx].tail)} "
                 game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples]) + " "
                 return game_sequence
 
 
-        elif corpora_type == "apples_corpora":
+        elif self.corpora_type == "apples_corpora":
             pass
         else:
             raise Exception("Incorrect Corpora Type")
@@ -227,8 +231,9 @@ class TournamentManager:
                             state.turn += 1
                             apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples])
                             # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
-                            # cpy = game.game_sequence
-                            # self.create_game_sequence(corpora_type="standard")
+                            cpy = game.game_sequence
+
+                            # self.create_game_sequencecreate_game_sequence(cpy, state, state):
                             game.game_sequence += f"S{AGENT_IDX} <DEAD> L{len(state.snakes[AGENT_IDX].tail)} {apple_positions} "
                             continue
                         
@@ -389,11 +394,11 @@ if __name__ == "__main__":
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
-    MODELS = ["standard_positions_fixed_start/out_fixed_bs_1600", "standard_positions_fixed_start/out_fixed_bs_2400"]
+    MODELS = ["standard_positions_fixed_start/out_fixed_bs_4352"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
-    AGENTS = ["random", "bfs"]
+    AGENTS = ["bfs"]
     # AGENTS = ["bfs"]
 
     SAMPLE = ["no-sampling", "sampling"]
