@@ -126,17 +126,17 @@ class TournamentManager:
                     game = self.games[game_id]
                     state = game.state
 
-                    # logger.info(state.print_game_state())
+                    # # logger.info(state.print_game_state())
 
-                    # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
-                    # protection against looping generation
-                    if state.turn > 1000:
-                        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
-                            batch_scores["agent"] += 1
-                        else:
-                            batch_scores["model"] += 1
+                    # # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
+                    # # protection against looping generation
+                    # if state.turn > 1000:
+                    #     if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
+                    #         batch_scores["agent"] += 1
+                    #     else:
+                    #         batch_scores["model"] += 1
 
-                        games_to_remove.append(game_id)
+                    #     games_to_remove.append(game_id)
 
 
                     # CHECK END GAME
@@ -149,14 +149,14 @@ class TournamentManager:
                         
                         games_to_remove.append(game_id)
                     
-                    # agent's snake is longer and llm's is dead
-                    elif len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
-                        batch_scores["agent"] += 1
-                        games_to_remove.append(game_id)
-                    # llm's is longer and agent's is dead
-                    elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
-                        batch_scores["model"] += 1
-                        games_to_remove.append(game_id)
+                    # # agent's snake is longer and llm's is dead
+                    # elif len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
+                    #     batch_scores["agent"] += 1
+                    #     games_to_remove.append(game_id)
+                    # # llm's is longer and agent's is dead
+                    # elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
+                    #     batch_scores["model"] += 1
+                    #     games_to_remove.append(game_id)
                 
                 # Remove games that are over
                 for id in games_to_remove:
