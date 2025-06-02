@@ -43,9 +43,10 @@ class GameState:
 
 class TournamentManager:
 
-    def __init__(self, model_name: str, device: str, n_tournaments: int, batch_size: int):
+    def __init__(self, model_name: str, corpora_type: str, device: str, n_tournaments: int, batch_size: int):
         self.n_tournaments = n_tournaments
         self.batch_size= batch_size
+        self.corpora_type = corpora_type
         self.games = []
         self.agent = snake_lib.Agent()
         self.results = {"model": 0, "agent": 0, "incorrect_generations": 0}
@@ -80,6 +81,42 @@ class TournamentManager:
         ))
 
 
+    def create_game_sequence(self, corpora_type: str, prev_state: snake_lib.State, current_state: snake_lib.State):
+        """
+            Game sequence should be created based on model type, since each model may accept different game sequence
+        """
+        if corpora_type == "standard_positions":
+
+            # initializing sequence
+            if prev_state == None:
+                game_sequence = ""
+                game_sequence += f"S0 R{current_state.snakes[0].head[0]}C{current_state.snakes[0].head[1]} L{len(current_state.snakes[0].tail)} "
+                game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples]) + " "
+                game_sequence += f"S1 R{current_state.snakes[1].head[0]}C{current_state.snakes[1].head[1]} L{len(current_state.snakes[1].tail)} "
+                game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples]) + " "
+                return game_sequence
+
+            # get snake, for which sequence needs to be created
+            currently_moving_snake_idx = current_state.turn % current_state.n_snakes
+            # current snake is dead, return dead sequence if this happens
+            if currently_moving_snake_idx in current_state.eliminated_snakes:
+                apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples])
+                # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
+                return f"S{currently_moving_snake_idx} <DEAD> L{len(current_state.snakes[currently_moving_snake_idx].tail)} {apple_positions} "
+            # normal sequence filling
+            else:
+                game_sequence = ""
+                game_sequence += f"S{currently_moving_snake_idx} R{current_state.snakes[currently_moving_snake_idx].head[0]}C{current_state.snakes[currently_moving_snake_idx].head[1]} L{len(current_state.snakes[currently_moving_snake_idx].tail)} "
+                game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples]) + " "
+                return game_sequence
+
+
+        elif corpora_type == "apples_corpora":
+            pass
+        else:
+            raise Exception("Incorrect Corpora Type")
+
+
     def run_tournaments(self, output_file: str, model_idx: int, sample_valid_tokens: bool = False, agent: str = "bfs"):
         """
             This is the easiest implementation, where batch feeded to the model
@@ -91,12 +128,6 @@ class TournamentManager:
         # batch size is effectively the biggest amount of games played at once
         while batch_idx < self.n_tournaments / self.batch_size:
             
-            # initialize batch size of games
-            # in every batch choose at random which snake is model and which is an agent
-            # MODEL_IDX = random.choice([0, 1])
-            # AGENT_IDX = 1 if MODEL_IDX == 0 else 0
-            # MODEL_IDX = 1
-            # AGENT_IDX = 0
             if model_idx == 1:
                 MODEL_IDX = 1
                 AGENT_IDX = 0
@@ -126,7 +157,6 @@ class TournamentManager:
                     game = self.games[game_id]
                     state = game.state
 
-                    # # logger.info(state.print_game_state())
 
                     # # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
                     # # protection against looping generation
@@ -139,15 +169,15 @@ class TournamentManager:
                     #     games_to_remove.append(game_id)
 
 
-                    # CHECK END GAME
-                    if state.is_game_over():
-                        # Determine winner
-                        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
-                            batch_scores["agent"] += 1
-                        else:
-                            batch_scores["model"] += 1
+                    # # # CHECK END GAME
+                    # # if state.is_game_over():
+                    # #     # Determine winner
+                    # #     if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
+                    # #         batch_scores["agent"] += 1
+                    # #     else:
+                    # #         batch_scores["model"] += 1
                         
-                        games_to_remove.append(game_id)
+                    # #     games_to_remove.append(game_id)
                     
                     # # agent's snake is longer and llm's is dead
                     # elif len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
@@ -157,6 +187,17 @@ class TournamentManager:
                     # elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
                     #     batch_scores["model"] += 1
                     #     games_to_remove.append(game_id)
+
+        
+                    # CHECK END GAME
+                    if state.is_game_over():
+                        # Determine winner
+                        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
+                            batch_scores["agent"] += 1
+                        else:
+                            batch_scores["model"] += 1
+                        
+                        games_to_remove.append(game_id)
                 
                 # Remove games that are over
                 for id in games_to_remove:
@@ -178,12 +219,16 @@ class TournamentManager:
                     for game_id in active_games:
                         game = self.games[game_id]
                         state = game.state
+
+                        assert batch_turn == state.turn % n_snakes, "Batch turn should be the same, as current state turn"
                         
                         # Skip if agent's snake is eliminated
                         if AGENT_IDX in state.eliminated_snakes:
                             state.turn += 1
                             apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples])
                             # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
+                            # cpy = game.game_sequence
+                            # self.create_game_sequence(corpora_type="standard")
                             game.game_sequence += f"S{AGENT_IDX} <DEAD> L{len(state.snakes[AGENT_IDX].tail)} {apple_positions} "
                             continue
                         
@@ -303,9 +348,9 @@ class TournamentManager:
                 were_there_options = False
                 for d in "UDLR":
                     if incorrect_state.try_move(d, snake) == True:
-                        logger.error(d)
-                        logger.error(model_idx)
-                        logger.error(incorrect_state.get_game_state())
+                        # logger.error(d)
+                        # logger.error(model_idx)
+                        # logger.error(incorrect_state.get_game_state())
                         were_there_options = True
                         break
                 
@@ -344,31 +389,31 @@ if __name__ == "__main__":
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
-    MODELS = ["standard_positions/out_standard_positions_bs_4352"]
+    MODELS = ["standard_positions_fixed_start/out_fixed_bs_1600", "standard_positions_fixed_start/out_fixed_bs_2400"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
-    AGENTS = ["bfs"]
+    AGENTS = ["random", "bfs"]
     # AGENTS = ["bfs"]
 
-    SAMPLE = ["sampling", "no-sampling"]
+    SAMPLE = ["no-sampling", "sampling"]
+    # SAMPLE = ["sampling", "no-sampling"]
 
-    MODEL_IDX = [1, 0]
+    MODEL_IDX = [0, 1]
 
     for model_name in MODELS:
         for agent_type in AGENTS:
 
-            logger.info(f"Agent {agent_type}")
-
             for do_sample in SAMPLE:
 
-                logger.info(f"Sampling? {do_sample}")
-
                 for model_idx in MODEL_IDX:
-
+                    
+                    logger.info(f"Agent {agent_type}")
+                    logger.info(f"Sampling? {do_sample}")
                     logger.info(f"Index {model_idx}")
 
                     manager = TournamentManager(model_name=model_name,
+                                                corpora_type="standard",
                                                 device="cuda",
                                                     n_tournaments=1000,
                                                     batch_size=500)

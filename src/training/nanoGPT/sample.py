@@ -272,6 +272,8 @@ def configure_model(model_name, device):
 
     out_dir = NANOGPT_DIR / pathlib.Path(model_name)
 
+    # logger.debug(model_name)
+
     # model
     if init_from == 'resume':
         # init from a model saved in a specific directory
@@ -285,9 +287,6 @@ def configure_model(model_name, device):
             if k.startswith(unwanted_prefix):
                 state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
         model.load_state_dict(state_dict)
-    elif init_from.startswith('gpt2'):
-        # init from a given GPT-2 model
-        model = GPT.from_pretrained(init_from, dict(dropout=0.0))
 
     model.eval()
     model.to(device)

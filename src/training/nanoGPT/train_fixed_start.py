@@ -129,7 +129,7 @@ def get_batch(split):
 
     
     # sanity check if all positions that are divisible by 4362 are actually start positions
-    assert np.all(data[valid_start_indices_np[0]] == 0), "Not all positions extractet by numpy are 0"    
+    assert np.all(data[valid_start_indices_np] == 0), "Not all positions extractet by numpy are 0"    
     
 
     # choose samples indices uniformly at random

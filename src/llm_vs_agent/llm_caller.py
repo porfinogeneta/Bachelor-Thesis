@@ -22,7 +22,7 @@ class LLMCaller:
 
     def __init__(self, model_name: str, device: str):
         # # self.model = model
-        self.MODEL, self.CTX = configure_model(model_name, device)
+        # self.MODEL, self.CTX = configure_model(model_name, device)
         self.device = device
         self.model_name = model_name
         # pass

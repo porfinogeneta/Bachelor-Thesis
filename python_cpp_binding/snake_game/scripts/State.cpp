@@ -445,7 +445,7 @@ bool State::is_game_over() {
     if (living_snakes.size() == 1) {
         // if the snake is longer than all eliminated snakes
         for (int e : eliminated_snakes) {
-            if (snakes[living_snakes[0]].tail.size()< snakes[e].tail.size()) {
+            if (snakes[living_snakes[0]].tail.size() <= snakes[e].tail.size()) {
                 // game is not over, this snake is not the winner
                 // it's still not longer than all of eliminated snakes
                 return false; 
