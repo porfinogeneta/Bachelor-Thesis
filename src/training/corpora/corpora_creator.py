@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import pathlib
+import re
 
 from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT
 
@@ -365,17 +366,38 @@ class CorporaCreator:
 
         self.get_statistics(corpora_folder=output_folder, stats_of_filename=output_filename)
 
-        
-    def create_tail_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
-        """
-            Creates a corpora, that is essentialy standard positions, but if the tail is non-zero
-            gives the tail position after the special token: <TAIL_END>
-        """
 
+    def file_save_create_stats_file(self, corpora: List[str],  output_folder: pathlib.Path, output_filename: pathlib.Path):
+        with open(output_folder / output_filename, 'w+') as file:
+            for game_line in corpora:
+                file.write(game_line + "\n")
+
+        self.get_statistics(corpora_folder=output_folder, stats_of_filename=output_filename)
+
+
+        
+    def create_no_tail_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
         standard_corpora = self.parse_raw_data_to_tokens()
 
-        tail_corpora = []
-        pass
+        no_tails_corpora = []
+
+        for game in standard_corpora:
+            no_tail_game = re.sub(r'\sL\d+', '', game.strip())
+            no_tails_corpora.append(no_tail_game)
+
+        
+        self.file_save_create_stats_file(corpora=no_tails_corpora, output_folder=output_folder, output_filename=output_filename)
+
+    # def create_tail_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
+    #     """
+    #         Creates a corpora, that is essentialy standard positions, but if the tail is non-zero
+    #         gives the tail position after the special token: <TAIL_END>
+    #     """
+
+    #     standard_corpora = self.parse_raw_data_to_tokens()
+
+    #     tail_corpora = []
+    #     pass
 
 
     def create_standard_corpora_fixed_start(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
@@ -442,12 +464,13 @@ class CorporaCreator:
 if __name__ == "__main__":
     creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions_fixed_start/")
-    OUT_CORP_FILE = pathlib.Path("standard_positions_fixed_start.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("no_tails_corpora/")
+    OUT_CORP_FILE = pathlib.Path("no_tails20k.txt")
     
     # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
-    creator.create_standard_corpora_fixed_start(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    # creator.create_standard_corpora_fixed_start(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    creator.create_no_tail_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
     # COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions/")
     # OUT_CORP_FILE = pathlib.Path("standard_positions20kp.txt")
