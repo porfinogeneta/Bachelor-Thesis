@@ -1,9 +1,6 @@
 
 from src.llm_vs_agent.game_visualizer import GameVisualizer
-import subprocess
-import os
-import re
-import random
+from typing import Tuple
 
 import sys
 import os
@@ -13,6 +10,10 @@ from src.llm_vs_agent.game_visualizer import GameVisualizer
 
 # llm caller
 from src.llm_vs_agent.llm_caller import LLMCaller
+
+from src.llm_vs_agent.utils import create_game_sequence
+
+from src.consts import APPLES_CORPORA, STANDARD, NO_TAILS
 
 # logger
 from src.logger.logger import setup_logger
@@ -36,12 +37,14 @@ n_apples = 5
 board_width = 10
 board_height = 10
 
-def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: str = "random_agent"):
+def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device: str, agent_type: str = "bfs"):
     """
     Runs the snake game simulation using the C++ classes exposed via pybind11 and language model.
 
     returns the amount of improper generations and string literal llm, agent on game over
     """
+
+    model_name, corpora_type = model_configuration
 
     parser = argparse.ArgumentParser(description="Run the Snake game simulation.")
     parser.add_argument('-V', '--visualize', action='store_true', help='Enable game visualization')
@@ -55,7 +58,7 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
     # llm caller
     caller = LLMCaller(model_name=model_name, device=device)
 
-    game_sequence = "<START> "
+   
    
     # Create instances of the C++ State and Agent classes
     state = snake_lib.State(n_snakes, n_apples, board_width, board_height)
@@ -66,13 +69,15 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
     MODEL_IDX = 0
     AGENT_IDX = 1
 
-    # initialize both snakes
-    game_sequence += f"S0 R{state.snakes[0].head[0]}C{state.snakes[0].head[1]} L{len(state.snakes[0].tail)} "
-    game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
-    game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
-    game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+    # # initialize both snakes
+    # game_sequence = "<START> "
+    # game_sequence += f"S0 R{state.snakes[0].head[0]}C{state.snakes[0].head[1]} L{len(state.snakes[0].tail)} "
+    # game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+    # game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
+    # game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
-
+    # initialize game sequence
+    game_sequence = create_game_sequence(corpora_type, "", None, state)
 
     # counter of improper moves generation of a model
     improper_genenerations_cnt = 0
@@ -81,7 +86,7 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
 
     if visualize:
         # game visualizer
-        visualizer = GameVisualizer(model_idx=MODEL_IDX)
+        visualizer = GameVisualizer(model_idx=MODEL_IDX, snake_name="Zdzisław")
 
     
 
@@ -90,19 +95,19 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
         if visualize:
             visualizer.visualize_state(state)
 
-        # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
-        if state.turn > 800:
-             if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
-                 return improper_genenerations_cnt, "agent", state
-             else:
-                 return improper_genenerations_cnt, "model", state
+        # # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
+        # if state.turn > 800:
+        #      if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
+        #          return improper_genenerations_cnt, "agent", state
+        #      else:
+        #          return improper_genenerations_cnt, "model", state
 
-        # agent's snake is longer and llm's is dead, no point of further gameplay
-        if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
-            return improper_genenerations_cnt, "agent", state
-        # llm's is longer and agent's is dead
-        elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
-            return improper_genenerations_cnt, "model", state
+        # # agent's snake is longer and llm's is dead, no point of further gameplay
+        # if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
+        #     return improper_genenerations_cnt, "agent", state
+        # # llm's is longer and agent's is dead
+        # elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
+        #     return improper_genenerations_cnt, "model", state
             
         # python is snake 1
         snake_moving_idx = state.turn % n_snakes
@@ -115,7 +120,8 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
             if MODEL_IDX in state.eliminated_snakes:
                 state.turn += 1
                 continue
-
+            
+            prev_state = state.deepCopy()
             prev_head = state.snakes[MODEL_IDX].head
 
             if sample_valid_tokens:
@@ -142,9 +148,11 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
             # given direction move, batch_moves is a lists, hence [0]
             state.move(batch_moves[0], MODEL_IDX)
 
-            # add current S_MODEL_IDX position
-            game_sequence += f"S{MODEL_IDX} R{state.snakes[MODEL_IDX].head[0]}C{state.snakes[MODEL_IDX].head[1]} L{len(state.snakes[MODEL_IDX].tail)} "
-            game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+            game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
+
+            # # add current S_MODEL_IDX position
+            # game_sequence += f"S{MODEL_IDX} R{state.snakes[MODEL_IDX].head[0]}C{state.snakes[MODEL_IDX].head[1]} L{len(state.snakes[MODEL_IDX].tail)} "
+            # game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
         else:
 
@@ -156,11 +164,15 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
             # print(f"Snake {snake_moving_idx} moving: {direction}")
 
             # given direction move
+            prev_state = state.deepCopy()
             state.move(direction, AGENT_IDX)
 
-            # add current S_AGENT_IDX position
-            game_sequence += f"S{AGENT_IDX} R{state.snakes[AGENT_IDX].head[0]}C{state.snakes[AGENT_IDX].head[1]} L{len(state.snakes[AGENT_IDX].tail)} "
-            game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+            game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
+            logger.debug(game_sequence)
+
+            # # add current S_AGENT_IDX position
+            # game_sequence += f"S{AGENT_IDX} R{state.snakes[AGENT_IDX].head[0]}C{state.snakes[AGENT_IDX].head[1]} L{len(state.snakes[AGENT_IDX].tail)} "
+            # game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
 
         # print(state.snakes)
@@ -176,4 +188,6 @@ def main(model_name: str, sample_valid_tokens: bool, device: str, agent_type: st
 
 
 if __name__ == "__main__":
-    print(main(model_name="aligned_games/out_aligned_bs_4352", sample_valid_tokens=True, device="cuda"))
+    MODEL_NAME = "no_tails_corpora/out_no_tails_corpora_bs_64"
+    CORPORA_TYPE = NO_TAILS
+    print(main(model_configuration=(MODEL_NAME, CORPORA_TYPE), sample_valid_tokens=False, device="mps"))
