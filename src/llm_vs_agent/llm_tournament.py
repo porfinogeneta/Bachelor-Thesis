@@ -19,7 +19,7 @@ from src.logger.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-from src.consts import PYBIND_DIR, PROJECT_PATH, STANDARD, APPLES_CORPORA
+from src.consts import PYBIND_DIR, PROJECT_PATH, STANDARD, APPLES_CORPORA, NO_TAILS
 sys.path.append(str(PYBIND_DIR))
 import snake_lib
 
@@ -123,7 +123,7 @@ class TournamentManager:
             batch_idx += 1
 
             while active_games:
-                logger.info(f"Active Games: {len(active_games)}")
+                # logger.info(f"Active Games: {len(active_games)}")
                 # First check which games are over
                 games_to_remove = []
                 for game_id in active_games:
@@ -400,13 +400,13 @@ if __name__ == "__main__":
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
-    MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    # MODELS = ["no_tails_corpora/out_no_tails_corpora_bs_64", "no_tails_corpora/out_no_tails_corpora_bs_4352"]
+    # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
+    MODELS = ["no_tails_corpora/out_no_tails_corpora_bs_64", "no_tails_corpora/out_no_tails_corpora_bs_4352"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
-    AGENTS = ["random"]
+    AGENTS = ["random", "bfs"]
     # AGENTS = ["bfs"]
 
     SAMPLE = ["no-sampling", "sampling"]
@@ -425,10 +425,10 @@ if __name__ == "__main__":
                     logger.info(f"Sampling? {do_sample}")
                     logger.info(f"Index {model_idx}")
 
-                    manager = TournamentManager(model_config=(model_name, APPLES_CORPORA),
-                                                device="mps",
-                                                    n_tournaments=4,
-                                                    batch_size=2)
+                    manager = TournamentManager(model_config=(model_name, NO_TAILS),
+                                                device="cuda",
+                                                    n_tournaments=1000,
+                                                    batch_size=500)
 
                     #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
                     output_directory = PROJECT_PATH / TESTING_PATH / model_name / agent_type / do_sample / f"model_idx_{model_idx}"
