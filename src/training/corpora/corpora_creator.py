@@ -366,7 +366,16 @@ class CorporaCreator:
         self.get_statistics(corpora_folder=output_folder, stats_of_filename=output_filename)
 
         
+    def create_tail_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
+        """
+            Creates a corpora, that is essentialy standard positions, but if the tail is non-zero
+            gives the tail position after the special token: <TAIL_END>
+        """
 
+        standard_corpora = self.parse_raw_data_to_tokens()
+
+        tail_corpora = []
+        pass
 
 
     def create_standard_corpora_fixed_start(self, output_folder: pathlib.Path, output_filename: pathlib.Path):

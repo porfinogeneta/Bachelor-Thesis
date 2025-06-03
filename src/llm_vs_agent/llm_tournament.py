@@ -6,7 +6,8 @@ import re
 import random
 from dataclasses import dataclass
 import pathlib
-
+from typing import Tuple
+import difflib
 import sys
 import os
 
@@ -18,7 +19,7 @@ from src.logger.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-from src.consts import PYBIND_DIR, PROJECT_PATH
+from src.consts import PYBIND_DIR, PROJECT_PATH, STANDARD, APPLES_CORPORA
 sys.path.append(str(PYBIND_DIR))
 import snake_lib
 
@@ -43,10 +44,10 @@ class GameState:
 
 class TournamentManager:
 
-    def __init__(self, model_name: str, corpora_type: str, device: str, n_tournaments: int, batch_size: int):
+    def __init__(self, model_config: Tuple[str, str], device: str, n_tournaments: int, batch_size: int):
         self.n_tournaments = n_tournaments
         self.batch_size= batch_size
-        self.corpora_type = corpora_type
+        model_name, self.corpora_type = model_config
         self.games = []
         self.agent = snake_lib.Agent()
         self.results = {"model": 0, "agent": 0, "incorrect_generations": 0}
@@ -72,7 +73,7 @@ class TournamentManager:
         game_sequence += f"S1 R{state.snakes[1].head[0]}C{state.snakes[1].head[1]} L{len(state.snakes[1].tail)} "
         game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
 
-        # cpy = self.create_game_sequence("", None, state)
+        cpy = self.create_game_sequence(game_sequence="", prev_state=None, current_state=state)
         # assert cpy == game_sequence, "Created sequence should be the same"
         
         self.games.append(GameState(
@@ -84,11 +85,11 @@ class TournamentManager:
         ))
 
 
-    def create_game_sequence(self, game_sequence: str, prev_state: snake_lib.State, current_state: snake_lib.State):
+    def create_game_sequence(self, game_sequence: str, prev_state, current_state):
         """
             Game sequence should be created based on model type, since each model may accept different game sequence
         """
-        if self.corpora_type == "standard_positions":
+        if self.corpora_type == STANDARD:
 
             # initializing sequence
             if prev_state == None:
@@ -101,9 +102,13 @@ class TournamentManager:
                 return game_sequence
 
             # get snake, for which sequence needs to be created
-            currently_moving_snake_idx = current_state.turn % current_state.n_snakes
+            # take prev state, since turn is for the previous one, the one that moved and 
+            # whose move resulted in current_state
+            currently_moving_snake_idx = prev_state.turn % prev_state.n_snakes
             # current snake is dead, return dead sequence if this happens
-            if currently_moving_snake_idx in current_state.eliminated_snakes:
+            # if the snake dies in the current turn we still provide valid position for the last move
+            # token dead shows up if it was already dead
+            if currently_moving_snake_idx in prev_state.eliminated_snakes:
                 apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples])
                 # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
                 game_sequence += f"S{currently_moving_snake_idx} <DEAD> L{len(current_state.snakes[currently_moving_snake_idx].tail)} {apple_positions} "
@@ -115,8 +120,52 @@ class TournamentManager:
                 return game_sequence
 
 
-        elif self.corpora_type == "apples_corpora":
-            pass
+        elif self.corpora_type == APPLES_CORPORA:
+            # prev_state is the state before currently_moving_snake_idx move
+            # state is the state after
+
+            # EACH SEQUENCE NEEDS TO FINISH WITH SPACE
+
+            # initializing sequence
+            if prev_state == None:
+                assert game_sequence == "", "At the beginning game sequence shouldn't be empty"
+                game_sequence = "<START> "
+                game_sequence += f"S0 R{current_state.snakes[0].head[0]}C{current_state.snakes[0].head[1]} L{len(current_state.snakes[0].tail)} "
+                game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in current_state.apples]) + " "
+                game_sequence += f"S1 R{current_state.snakes[1].head[0]}C{current_state.snakes[1].head[1]} L{len(current_state.snakes[1].tail)} "
+                game_sequence += "<APPLES_UNCHANGED> "
+                return game_sequence
+            
+            currently_moving_snake_idx = prev_state.turn % prev_state.n_snakes
+
+            if currently_moving_snake_idx in prev_state.eliminated_snakes:
+                # if in the previous state snake was already dead, apples certainly won't change
+                game_sequence += f"S{currently_moving_snake_idx} <DEAD> L{len(current_state.snakes[currently_moving_snake_idx].tail)} <APPLES_UNCHANGED> "
+                return game_sequence
+            # normal sequence filling
+            else:
+
+                # get apple that was added after eating, or write <APPLES_UNCHANGED> if nothing was eaten
+                cur_apples = [(apple.position[0], apple.position[1]) for apple in current_state.apples]
+                prev_apples = [(apple.position[0], apple.position[1]) for apple in prev_state.apples]
+                diff = list(set(cur_apples) - set(prev_apples))
+
+                s0 = prev_state.get_full_history()
+                s1 = current_state.get_full_history()
+                
+                assert diff == [] or len(diff) == 1, f"only one apple can differ {s0}\n\n{s1}\n\n{diff}"
+                assert diff == [] or diff not in prev_apples, "assert that new apple was actually added"
+
+                # if apple was eaten, show the new apple position
+                game_sequence += f"S{currently_moving_snake_idx} R{current_state.snakes[currently_moving_snake_idx].head[0]}C{current_state.snakes[currently_moving_snake_idx].head[1]} L{len(current_state.snakes[currently_moving_snake_idx].tail)} "
+                if diff != []:
+                    apple = diff[0]
+                    # game_sequence += f"A{apple[0]}{apple[1]} "
+                else:
+                    game_sequence += "<APPLES_UNCHANGED> "
+                
+                return game_sequence
+
         else:
             raise Exception("Incorrect Corpora Type")
 
@@ -223,6 +272,7 @@ class TournamentManager:
                     for game_id in active_games:
                         game = self.games[game_id]
                         state = game.state
+                        prev_state = state.deepCopy()
 
                         assert batch_turn == state.turn % n_snakes, "Batch turn should be the same, as current state turn"
                         
@@ -230,11 +280,16 @@ class TournamentManager:
                         if AGENT_IDX in state.eliminated_snakes:
                             state.turn += 1
                             apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples])
+                            
                             # dead snake gets S_AGENT_IDX <DEAD> L10 A12A23A34A35A36 
-                            cpy = game.game_sequence
-
-                            # self.create_game_sequencecreate_game_sequence(cpy, state, state):
+                            seq = self.create_game_sequence(game_sequence=game.game_sequence, prev_state=prev_state, current_state=state)
                             game.game_sequence += f"S{AGENT_IDX} <DEAD> L{len(state.snakes[AGENT_IDX].tail)} {apple_positions} "
+
+                            # APPLE CORPORA TESTING
+                            # diff = difflib.ndiff([seq], [game.game_sequence])
+                            # s = '\n'.join(diff)
+                            # assert seq == game.game_sequence, f"{s} dead sequence agent"
+                            logger.info(seq)
                             continue
                         
 
@@ -246,9 +301,15 @@ class TournamentManager:
                         state.move(direction, AGENT_IDX)
                         
                         game.state = state
+                        
+                        seq = self.create_game_sequence(game_sequence=game.game_sequence, prev_state=prev_state, current_state=state)
                         # add current S_AGENT_IDX position
                         game.game_sequence += f"S{AGENT_IDX} R{state.snakes[AGENT_IDX].head[0]}C{state.snakes[AGENT_IDX].head[1]} L{len(state.snakes[AGENT_IDX].tail)} "
                         game.game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+                        
+                        # diff = difflib.ndiff([seq], [game.game_sequence])
+                        # assert seq == game.game_sequence, '\n'.join(diff)
+                        logger.info(seq)
                         
 
                 # Process LLM's turn (batch_turn = MODEL_IDX)
@@ -262,10 +323,21 @@ class TournamentManager:
                     for game_id in active_games:
                         game = self.games[game_id]
                         state = game.state
+                        prev_state = state.deepCopy()
                         
                         # Skip if LLM's snake is eliminated
                         if MODEL_IDX in state.eliminated_snakes:
                             state.turn += 1
+
+                            apple_positions = ' '.join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples])
+                            seq = self.create_game_sequence(game_sequence=game.game_sequence, prev_state=prev_state, current_state=state)
+                            
+                            game.game_sequence += f"S{MODEL_IDX} <DEAD> L{len(state.snakes[MODEL_IDX].tail)} {apple_positions} "
+                            
+                            # diff = difflib.ndiff([seq], [game.game_sequence])
+                            # s = '\n'.join(diff)
+                            # assert seq == game.game_sequence, f"{s} dead sequence model"
+                            logger.info(seq)
                             continue
                         
                         prev_head = state.snakes[MODEL_IDX].head
@@ -303,17 +375,28 @@ class TournamentManager:
                             game = self.games[game_id]
                             state = game.state
 
-                            state_cpy = state.deepCopy()
+                            # state before the move
+                            prev_state = state.deepCopy()
 
                             # states and incorrect tokens that were generated for them
                             if incorrect_tokens[i] != None:
-                                self.incorrect_token_paired_with_state.append((batch_idx, batch_turn, MODEL_IDX, incorrect_tokens[i], state_cpy))
+                                self.incorrect_token_paired_with_state.append((batch_idx, batch_turn, MODEL_IDX, incorrect_tokens[i], prev_state))
                             
                             state.move(direction, MODEL_IDX)
                             
                             # add current S1 position
+
+                            seq = self.create_game_sequence(game_sequence=game.game_sequence, prev_state=prev_state, current_state=state)
+
                             game.game_sequence += f"S{MODEL_IDX} R{state.snakes[MODEL_IDX].head[0]}C{state.snakes[MODEL_IDX].head[1]} L{len(state.snakes[MODEL_IDX].tail)} "
                             game.game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
+
+                            # logger.debug(seq)
+                            # logger.debug(game.game_sequence)
+                            # diff = difflib.ndiff([seq], [game.game_sequence])
+                            # assert seq == game.game_sequence, '\n'.join(diff)
+                            logger.info(seq)
+                        
                             
             
             # no active games, end of batch
@@ -394,7 +477,7 @@ if __name__ == "__main__":
     TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
-    MODELS = ["standard_positions_fixed_start/out_fixed_bs_4352"]
+    MODELS = ["standard_positions/out_standard_positions_bs_128"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
@@ -417,11 +500,10 @@ if __name__ == "__main__":
                     logger.info(f"Sampling? {do_sample}")
                     logger.info(f"Index {model_idx}")
 
-                    manager = TournamentManager(model_name=model_name,
-                                                corpora_type="standard",
-                                                device="cuda",
-                                                    n_tournaments=1000,
-                                                    batch_size=500)
+                    manager = TournamentManager(model_config=(model_name, APPLES_CORPORA),
+                                                device="mps",
+                                                    n_tournaments=10,
+                                                    batch_size=5)
 
                     #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
                     output_directory = PROJECT_PATH / TESTING_PATH / model_name / agent_type / do_sample / f"model_idx_{model_idx}"

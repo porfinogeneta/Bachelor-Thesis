@@ -576,6 +576,8 @@ string State::get_full_history() {
             result += to_string(size) + " ";
         }
         result += "\n";
+
+        
     }
     
     result += "Apples\n";
