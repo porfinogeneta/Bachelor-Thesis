@@ -4,7 +4,7 @@
 
 # python3 train.py --out_dir="out_standard_positions_bs_1600" --dataset="standard_positions" --compile=True --device="cuda"  config/train_standard_positions.py | tee "/home/ubuntu/Bachelor-Thesis/src/training/train_configs/standard_positions/out_standard_positions_bs_1600.txt"
 
-out_dir = 'no_tails_corpora/out_no_tails_corpora_bs_64'
+out_dir = 'no_tails_corpora/out_no_tails_corpora_bs_3776'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often
@@ -16,8 +16,8 @@ always_save_checkpoint = False
 dataset = 'no_tails_corpora'
 gradient_accumulation_steps = 1
 
-batch_size = 256
-block_size = 64
+batch_size = 128
+block_size = 3776
 
 # baby GPT model :)
 n_layer = 6

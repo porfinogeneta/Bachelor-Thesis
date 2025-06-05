@@ -401,7 +401,7 @@ if __name__ == "__main__":
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
     # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    MODELS = ["no_tails_corpora/out_no_tails_corpora_bs_64", "no_tails_corpora/out_no_tails_corpora_bs_4352"]
+    MODELS = ["apples_corpora/out_apples_corpora_bs_2176"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
@@ -425,7 +425,7 @@ if __name__ == "__main__":
                     logger.info(f"Sampling? {do_sample}")
                     logger.info(f"Index {model_idx}")
 
-                    manager = TournamentManager(model_config=(model_name, NO_TAILS),
+                    manager = TournamentManager(model_config=(model_name, APPLES_CORPORA),
                                                 device="cuda",
                                                     n_tournaments=1000,
                                                     batch_size=500)
