@@ -114,7 +114,7 @@ double MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
     int snake_turn = current_snake;
     
     while (!rollout_state->is_game_over()
-            && (rollout_state->turn - prev_state->turn) < 10 
+            && (rollout_state->turn - prev_state->turn) < 8 
             // && !rollout_state->apples.empty()
         )
     
@@ -238,44 +238,78 @@ void MCTS::backpropagate(double rollout_winner, int main_player, double score_fo
     }
 }
 
-MCTSNode* MCTS::select_best_child(MCTSNode* node, int main_player) {
-    
-    // selected best child based on UCB value
-    MCTSNode* best_child = nullptr;
-    double best_ucb = -1.0;
-    int max_played_games = -1;
 
-    // // if there wasn't enough games played, choose randomly
-    // if (node->total_games < 10){
-    //     // randomly choose one of the children
-    //     if (node->children.empty()) {
-    //         return nullptr; // no children to select from
-    //     }
-    //     uniform_int_distribution<int> dist(0, node->children.size() - 1);
-    //     int random_index = dist(gen);
-    //     return node->children[random_index];
-    // }
-    
-   // choose node, maximalizing ucb
-    for (auto child : node->children){
-        // można robić tak, że będziemy aplikować UCB dopiero jak wierzchołek był odwiedzony T razy
-        double ucb_val = child->ucb(main_player, sqrt(2));
-        if (ucb_val > best_ucb){
-            best_ucb = ucb_val;
-            best_child = child;
-            max_played_games = child->total_games;
-        }
-        // in case two have the same ucb, choose the one visited more often
-        // one that played more games
-        else if (ucb_val == best_ucb && max_played_games < child->total_games){
-            best_child = child;
-            max_played_games = child->total_games;
-        }
+MCTSNode* MCTS::select_best_child(MCTSNode* node, int main_player) {
+    MCTSNode* best_child = nullptr;
+    double best_score = -1.0;
+
+    // Is it our turn or the opponent's turn at this node?
+    bool is_main_player_turn = (node->current_snake_idx == main_player);
+
+    if (is_main_player_turn) {
+        best_score = -1.0; // We want to maximize our score
+    } else {
+        best_score = numeric_limits<double>::max(); // Opponent will try to minimize our score
     }
 
-    // return most visited and maximalizing ucb child
+    for (auto child : node->children) {
+        double ucb_val = child->ucb(main_player, sqrt(2));
+        
+        if (is_main_player_turn) {
+            // Our turn: find the move with the highest UCB
+            if (ucb_val > best_score) {
+                best_score = ucb_val;
+                best_child = child;
+            }
+        } else {
+            // Opponent's turn: find the move with the lowest UCB
+            if (ucb_val < best_score) {
+                best_score = ucb_val;
+                best_child = child;
+            }
+        }
+    }
     return best_child;
 }
+
+// MCTSNode* MCTS::select_best_child(MCTSNode* node, int main_player) {
+    
+//     // selected best child based on UCB value
+//     MCTSNode* best_child = nullptr;
+//     double best_ucb = -1.0;
+//     int max_played_games = -1;
+
+//     // // if there wasn't enough games played, choose randomly
+//     // if (node->total_games < 10){
+//     //     // randomly choose one of the children
+//     //     if (node->children.empty()) {
+//     //         return nullptr; // no children to select from
+//     //     }
+//     //     uniform_int_distribution<int> dist(0, node->children.size() - 1);
+//     //     int random_index = dist(gen);
+//     //     return node->children[random_index];
+//     // }
+    
+//    // choose node, maximalizing ucb
+//     for (auto child : node->children){
+//         // można robić tak, że będziemy aplikować UCB dopiero jak wierzchołek był odwiedzony T razy
+//         double ucb_val = child->ucb(main_player, sqrt(2));
+//         if (ucb_val > best_ucb){
+//             best_ucb = ucb_val;
+//             best_child = child;
+//             max_played_games = child->total_games;
+//         }
+//         // in case two have the same ucb, choose the one visited more often
+//         // one that played more games
+//         else if (ucb_val == best_ucb && max_played_games < child->total_games){
+//             best_child = child;
+//             max_played_games = child->total_games;
+//         }
+//     }
+
+//     // return most visited and maximalizing ucb child
+//     return best_child;
+// }
 
 void MCTS::perform_iteration(int main_player) {
     MCTSNode* current = root;
