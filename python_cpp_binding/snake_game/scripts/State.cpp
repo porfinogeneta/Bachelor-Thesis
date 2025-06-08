@@ -497,20 +497,20 @@ int State::get_winner(const State& prev_state) {
             // }
         }
 
-        if (min_dist_0 < min_dist_1){
-            snake_0_score += CLOSE_TO_APPLE;
+        // if (min_dist_0 < min_dist_1){
+        //     snake_0_score += CLOSE_TO_APPLE;
 
-            // if snake is like 2 fields from apple add close again
-            if (min_dist_0 <= 2){
-                snake_0_score += CLOSE_TO_APPLE;
-            }
-        }else if (min_dist_1 < min_dist_0){
-            snake_1_score += CLOSE_TO_APPLE;
+        //     // if snake is like 2 fields from apple add close again
+        //     if (min_dist_0 <= 2){
+        //         snake_0_score += CLOSE_TO_APPLE;
+        //     }
+        // }else if (min_dist_1 < min_dist_0){
+        //     snake_1_score += CLOSE_TO_APPLE;
 
-            if (min_dist_1 <= 2){
-                snake_1_score += CLOSE_TO_APPLE;
-            }
-        }
+        //     if (min_dist_1 <= 2){
+        //         snake_1_score += CLOSE_TO_APPLE;
+        //     }
+        // }
     }
 
     // find out which snake died in this state
@@ -523,7 +523,7 @@ int State::get_winner(const State& prev_state) {
 
     bool is_snake_0_dead_before = prev_state.eliminated_snakes.find(0) != prev_state.eliminated_snakes.end();
     bool is_snake_1_dead_before = prev_state.eliminated_snakes.find(1) != prev_state.eliminated_snakes.end();
-    // if snake 0 was dead before and is still dead, don't give it any points
+    // // if snake 0 was dead before and is still dead, don't give it any points
     if (is_snake_0_dead_before){
         snake_0_score -= 10000;
     }
@@ -532,20 +532,20 @@ int State::get_winner(const State& prev_state) {
         snake_1_score -= 10000;
     }
     
-    if (is_snake_0_dead_now){
-        // discourage death of snake, substract points
-        snake_0_score += DEATH_PENALTY;
-        // // if snake_1 is still alive give it points for killing
-        // if (eliminated_snakes.find(1) == eliminated_snakes.end()){
-        //     snake_1_score += KILL_OPPONENT_BONUS;
-        // }
-    }else if (is_snake_1_dead_now) {
-        snake_1_score += DEATH_PENALTY;
-        // // if snake_0 is still alive give it points for killing
-        // if (eliminated_snakes.find(0) == eliminated_snakes.end()){
-        //     snake_0_score += KILL_OPPONENT_BONUS;
-        // }
-    }
+    // if (is_snake_0_dead_now){
+    //     // discourage death of snake, substract points
+    //     snake_0_score += DEATH_PENALTY;
+    //     // // if snake_1 is still alive give it points for killing
+    //     // if (eliminated_snakes.find(1) == eliminated_snakes.end()){
+    //     //     snake_1_score += KILL_OPPONENT_BONUS;
+    //     // }
+    // }else if (is_snake_1_dead_now) {
+    //     snake_1_score += DEATH_PENALTY;
+    //     // // if snake_0 is still alive give it points for killing
+    //     // if (eliminated_snakes.find(0) == eliminated_snakes.end()){
+    //     //     snake_0_score += KILL_OPPONENT_BONUS;
+    //     // }
+    // }
 
     if (snake_0_score > snake_1_score) {
         // snake 0 is the winner

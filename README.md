@@ -11,6 +11,9 @@ replace path to certificate
 sudo apt-get update
 sudo apt-get install git-lfs
 
+albo tak:
+sudo apt-get update && sudo apt-get install git-lfs && git clone -b mcts_support https://github.com/porfinogeneta/Bachelor-Thesis.git
+
 
 git lfs fetch --all
 git lfs pull

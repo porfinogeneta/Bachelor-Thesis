@@ -229,6 +229,7 @@ char Agent::random_based_agent(const State &state, int current_snake_idx) {
 
         if (viable_apple_moves.empty()){
             if (viable_normal_moves.empty()){
+                // cout << "No free direction found, choosing random move" << endl;
                 viable_moves.push_back(getRandomChar());
             }else {
                 viable_moves = viable_normal_moves;
@@ -243,6 +244,58 @@ char Agent::random_based_agent(const State &state, int current_snake_idx) {
     return chose_random_vector_element(viable_moves);
 
 }
+
+// char Agent::random_complete_agent(
+//                 const State &state,
+//                 int current_snake_idx
+//             )
+//         {
+
+
+//         set<pair <int, int> > apples_positions = get_positions_occupied_by_apples(state.apples);
+//         set<pair <int, int> > snake_positions = get_positions_occupiend_by_snakes(current_snake_idx, state.snakes);
+
+//         // possible positions, from them we sample
+//         vector<char> viable_normal_moves;
+
+//         // create viable moves, greedy approach of always choosing position with an apple and free position
+//         // if nothing is available, greedy approach ensures shorter games, since snakes grow quicker
+//         pair<int, int> current_snake_head = state.snakes[current_snake_idx].head;
+//         // UP
+//         pair<int, int> up_pair = make_pair(current_snake_head.first - 1, current_snake_head.second);
+//         if (!is_position_in_set(up_pair, snake_positions) && !is_position_out_of_bounds(up_pair, state.board_width, state.board_height)){
+//             viable_normal_moves.push_back('U');
+//         }
+
+//         // DOWN
+//         pair<int, int> down_pair = make_pair(current_snake_head.first + 1, current_snake_head.second);
+//         if (!is_position_in_set(down_pair, snake_positions) && !is_position_out_of_bounds(down_pair, state.board_width, state.board_height)){
+//             viable_normal_moves.push_back('D');
+//         }
+
+//         // LEFT
+//         pair<int, int> left_pair = make_pair(current_snake_head.first, current_snake_head.second - 1);
+//         if (!is_position_in_set(left_pair, snake_positions) && !is_position_out_of_bounds(left_pair, state.board_width, state.board_height)){
+//             viable_normal_moves.push_back('L');
+//         }
+
+//         // RIGHT
+//         pair<int, int> right_pair = make_pair(current_snake_head.first, current_snake_head.second + 1);
+//         if (!is_position_in_set(right_pair, snake_positions) && !is_position_out_of_bounds(right_pair, state.board_width, state.board_height)){
+//             viable_normal_moves.push_back('R');
+//         }
+
+//         if (viable_normal_moves.empty()){
+//             // if no free direction is found, go in any direction
+//             // best_dir = getRandomChar();
+//             cout << "No free direction found, choosing random move" << endl;
+//             viable_normal_moves.push_back(getRandomChar());
+//         }
+
+//         // randomy sample move
+//         return chose_random_vector_element(viable_normal_moves);
+// }
+
 
 // char Agent::manhattan_distance(
 //                 const pair<int, int> &a,
