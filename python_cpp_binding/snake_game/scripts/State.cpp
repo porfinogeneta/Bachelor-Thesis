@@ -458,9 +458,9 @@ bool State::is_game_over() {
     return false;
 }
 
-const int GROWTH_PER_SEGMENT = 15;
-const int KILL_OPPONENT_BONUS = 30;
-const int DEATH_PENALTY = -10;
+const int GROWTH_PER_SEGMENT = 1000;
+const int KILL_OPPONENT_BONUS = 0;
+const int DEATH_PENALTY = -200;
 const int CLOSE_TO_APPLE = 10;
 
 int State::get_winner(const State& prev_state) {
@@ -489,11 +489,12 @@ int State::get_winner(const State& prev_state) {
         // which snake is closer to any apple
         for (const Apple& apple : apples) {
             // change apples scores only for living snakes
-            if (eliminated_snakes.find(0) == eliminated_snakes.end()){
+            // if (eliminated_snakes.find(0) == eliminated_snakes.end()){
                 min_dist_0 = min(min_dist_0, abs(snakes[0].head.first - apple.position.first) + abs(snakes[0].head.second - apple.position.second));
-            }else if (eliminated_snakes.find(1) == eliminated_snakes.end()) {
-                min_dist_1 = min(min_dist_0, abs(snakes[1].head.first - apple.position.first) + abs(snakes[1].head.second - apple.position.second));
-            }
+            // }
+            // else if (eliminated_snakes.find(1) == eliminated_snakes.end()) {
+                min_dist_1 = min(min_dist_1, abs(snakes[1].head.first - apple.position.first) + abs(snakes[1].head.second - apple.position.second));
+            // }
         }
 
         if (min_dist_0 < min_dist_1){
@@ -518,20 +519,32 @@ int State::get_winner(const State& prev_state) {
     
     bool is_snake_1_dead_now = prev_state.eliminated_snakes.find(1) == prev_state.eliminated_snakes.end() && 
         eliminated_snakes.find(1) != eliminated_snakes.end();
+
+
+    bool is_snake_0_dead_before = prev_state.eliminated_snakes.find(0) != prev_state.eliminated_snakes.end();
+    bool is_snake_1_dead_before = prev_state.eliminated_snakes.find(1) != prev_state.eliminated_snakes.end();
+    // if snake 0 was dead before and is still dead, don't give it any points
+    if (is_snake_0_dead_before){
+        snake_0_score -= 10000;
+    }
+
+    if (is_snake_1_dead_before){
+        snake_1_score -= 10000;
+    }
     
     if (is_snake_0_dead_now){
         // discourage death of snake, substract points
         snake_0_score += DEATH_PENALTY;
-        // if snake_1 is still alive give it points for killing
-        if (eliminated_snakes.find(1) == eliminated_snakes.end()){
-            snake_1_score += KILL_OPPONENT_BONUS;
-        }
+        // // if snake_1 is still alive give it points for killing
+        // if (eliminated_snakes.find(1) == eliminated_snakes.end()){
+        //     snake_1_score += KILL_OPPONENT_BONUS;
+        // }
     }else if (is_snake_1_dead_now) {
         snake_1_score += DEATH_PENALTY;
-        // if snake_0 is still alive give it points for killing
-        if (eliminated_snakes.find(0) == eliminated_snakes.end()){
-            snake_0_score += KILL_OPPONENT_BONUS;
-        }
+        // // if snake_0 is still alive give it points for killing
+        // if (eliminated_snakes.find(0) == eliminated_snakes.end()){
+        //     snake_0_score += KILL_OPPONENT_BONUS;
+        // }
     }
 
     if (snake_0_score > snake_1_score) {
@@ -577,7 +590,7 @@ string State::get_full_history() {
         }
         result += "\n";
 
-        
+
     }
     
     result += "Apples\n";

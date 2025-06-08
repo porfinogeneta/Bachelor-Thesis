@@ -1,7 +1,7 @@
 import pathlib
 
-# PROJECT_PATH = pathlib.Path("/Users/szymon/Documents/Bachelor-Thesis")
-PROJECT_PATH = pathlib.Path("/home/ubuntu/Bachelor-Thesis")
+PROJECT_PATH = pathlib.Path("/Users/szymon/Documents/Bachelor-Thesis")
+# PROJECT_PATH = pathlib.Path("/home/ubuntu/Bachelor-Thesis")
 NANOGPT_DIR = PROJECT_PATH / pathlib.Path("src/training/nanoGPT/")
 
 # PYBIND
@@ -24,3 +24,4 @@ GAMES_IN_RAW_FILE = 20001
 STANDARD = "standard"
 APPLES_CORPORA = "apples_corpora"
 NO_TAILS = "no_tails_corpora"
+MINIMAL = "minimal_corpora"

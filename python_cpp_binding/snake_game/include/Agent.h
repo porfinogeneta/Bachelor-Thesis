@@ -1,5 +1,6 @@
 #include <vector>
 #include <set>
+#include <map>
 #include "Snake.h"
 #include "Apple.h"
 #include "State.h"

@@ -1,6 +1,9 @@
 #include "../include/MCTS.h"
 #include <algorithm>
 #include <iostream>
+#include <iostream>
+#include <iomanip>
+#include <string>
 
 // MCTSNode (what's stored in the tree)
 MCTSNode::MCTSNode() : total_games(0), wins(0), current_snake_idx(0), 
@@ -9,7 +12,7 @@ MCTSNode::MCTSNode() : total_games(0), wins(0), current_snake_idx(0),
 
 
 MCTSNode::~MCTSNode() {
-    // delete node_state;
+    delete node_state;
     for (MCTSNode* child : children) {
         delete child;
     }
@@ -26,7 +29,7 @@ double MCTSNode::ucb(int main_player, double constant) {
     
     double exploitation;
     if (current_snake_idx == main_player) {
-        exploitation = static_cast<double>(wins) / total_games;
+        exploitation = (static_cast<double>(wins) / total_games);
     } else {
         exploitation = 1.0 - (static_cast<double>(wins) / total_games);
     }
@@ -111,8 +114,9 @@ int MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
     int snake_turn = current_snake;
     
     while (!rollout_state->is_game_over()
-            && rollout_state->turn < 300 \
-            && !rollout_state->apples.empty())
+            // && rollout_state->turn < 30 
+            // && !rollout_state->apples.empty()
+        )
     
     {
         char move = rollout_policy(*rollout_state, snake_turn);
@@ -134,10 +138,15 @@ int MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
     int winner = rollout_state->get_winner(*prev_state);
     *passed_turns = rollout_state->turn - prev_state->turn;
 
-    delete rollout_state; // clean up the allocated memory
-    delete prev_state; // clean up the allocated memory
+
+    // *passed_turns = rollout_state->turn - prev_state->turn;
+
+    delete rollout_state;
+    delete prev_state; 
 
     return winner;
+
+   
 }
 
 void MCTS::backpropagate(int rollout_winner, double score_for_winners, MCTSNode* current) {
@@ -148,7 +157,12 @@ void MCTS::backpropagate(int rollout_winner, double score_for_winners, MCTSNode*
         // update wins only if the winning snake is the one, whose turn is in the current node
         if (rollout_winner == current->current_snake_idx) {
             // increase by a given score, assosiated with how quicly the win was achived
-            current->wins += score_for_winners; // current snake won
+            current->wins += 1.0; // current snake won
+        }
+
+        if (rollout_winner == -1) {
+            // tie, no wins for anyone
+            // current->wins += 0.5; // tie, both snakes get half a win
         }
        
         
@@ -163,9 +177,21 @@ MCTSNode* MCTS::select_best_child(MCTSNode* node, int main_player) {
     MCTSNode* best_child = nullptr;
     double best_ucb = -1.0;
     int max_played_games = -1;
+
+    // // if there wasn't enough games played, choose randomly
+    // if (node->total_games < 10){
+    //     // randomly choose one of the children
+    //     if (node->children.empty()) {
+    //         return nullptr; // no children to select from
+    //     }
+    //     uniform_int_distribution<int> dist(0, node->children.size() - 1);
+    //     int random_index = dist(gen);
+    //     return node->children[random_index];
+    // }
     
    // choose node, maximalizing ucb
     for (auto child : node->children){
+        // można robić tsk, że będziemy aplikować UCB dopiero jak wierzchołek był odwiedzony T razy
         double ucb_val = child->ucb(main_player, sqrt(2));
         if (ucb_val > best_ucb){
             best_ucb = ucb_val;
@@ -196,9 +222,10 @@ void MCTS::perform_iteration(int main_player) {
     // Expansion - add children if node has been visited
     if (current->total_games > 0) {
         expand_node(current);
+        // select a random child to continue the simulation
         if (!current->children.empty()) {
-            // select the first child to continue the simulation
-            current = current->children[0];
+            std::uniform_int_distribution<int> dist(0, current->children.size() - 1);
+            current = current->children[dist(gen)];
         }
     }
     
@@ -210,7 +237,7 @@ void MCTS::perform_iteration(int main_player) {
     // increase nominator only for current snake idx
     // increase denominator for all snakes
 
-    // give higher score for the sanke that won faster, made more greedy moves toward winning
+    // give higher score for the snake that won faster, made more greedy moves toward winning
     double score_for_winners = 1.0 * exp(-(passed_turns));
 
 
@@ -229,7 +256,214 @@ char MCTS::find_best_move(const State& state, int snake_idx, int iterations) {
         perform_iteration(snake_idx);
     }
     
-    MCTSNode* best_child = select_best_child(root, snake_idx);
+
+    // print_tree(3);
+
+    MCTSNode* best_move_node = nullptr;
+    double max_win_rate = -1.0;
     
-    return best_child ? best_child->action : 'U';
+    for (MCTSNode* child : root->children) {
+        if (child->total_games > 0) {
+            double win_rate = 1.0 - (static_cast<double>(child->wins) / child->total_games);
+            if (win_rate > max_win_rate) {
+                max_win_rate = win_rate;
+                best_move_node = child;
+            }
+        }
+    }
+
+    if (!best_move_node) {
+        cout << "No valid moves found after MCTS iterations." << endl;
+        // return 'U'; // Up as a default move
+    }
+    
+    return best_move_node ? best_move_node->action : 'R';
+}
+
+
+
+void MCTS::print_tree(int max_depth) const {
+    if (!root) {
+        std::cout << "Tree is empty (root is null)" << std::endl;
+        return;
+    }
+    
+    std::cout << "=== MCTS Tree Structure ===" << std::endl;
+    std::cout << "Root (Snake " << root->current_snake_idx << ")" << std::endl;
+    std::cout << "Games: " << root->total_games << ", Wins: " << std::fixed << std::setprecision(2) 
+              << root->wins << ", Win Rate: ";
+    
+    if (root->total_games > 0) {
+        std::cout << (root->wins / root->total_games * 100) << "%";
+    } else {
+        std::cout << "N/A";
+    }
+    std::cout << std::endl;
+    
+    if (root->children.empty()) {
+        std::cout << "└── No children (leaf node)" << std::endl;
+    } else {
+        for (size_t i = 0; i < root->children.size(); ++i) {
+            bool is_last = (i == root->children.size() - 1);
+            print_node(root->children[i], 1, "", is_last, max_depth);
+        }
+    }
+    std::cout << "=========================" << std::endl;
+}
+
+void MCTS::print_node(MCTSNode* node, int depth, const std::string& prefix, bool is_last, int max_depth) const {
+    if (!node || depth > max_depth) {
+        return;
+    }
+    
+    // Print current node
+    std::cout << prefix;
+    std::cout << (is_last ? "└── " : "├── ");
+    
+    // Action and snake info
+    std::cout << "Action: " << (node->action ? node->action : '?') 
+              << " (Snake " << node->current_snake_idx << ") ";
+    
+    // Statistics
+    std::cout << "[Games: " << node->total_games << ", Wins: " << std::fixed << std::setprecision(2) 
+              << node->wins;
+    
+    if (node->total_games > 0) {
+        double win_rate = node->wins / node->total_games;
+        std::cout << ", WR: " << (win_rate * 100) << "%";
+        
+        // Show UCB value if it has a parent
+        if (node->parent) {
+            double ucb_val = node->ucb(0, sqrt(2.0)); // Using player 0 as default
+            if (ucb_val == std::numeric_limits<double>::max()) {
+                std::cout << ", UCB: ∞";
+            } else {
+                std::cout << ", UCB: " << std::setprecision(3) << ucb_val;
+            }
+        }
+    } else {
+        std::cout << ", WR: N/A, UCB: ∞";
+    }
+    std::cout << "]";
+    
+    // Game state info (optional - might be too verbose)
+    if (node->node_state) {
+        std::cout << " Turn: " << node->node_state->turn;
+        if (node->node_state->is_game_over()) {
+            std::cout << " [GAME OVER]";
+        }
+    }
+    
+    std::cout << std::endl;
+    
+    // Print children
+    if (!node->children.empty() && depth < max_depth) {
+        std::string new_prefix = prefix + (is_last ? "    " : "│   ");
+        
+        for (size_t i = 0; i < node->children.size(); ++i) {
+            bool child_is_last = (i == node->children.size() - 1);
+            print_node(node->children[i], depth + 1, new_prefix, child_is_last, max_depth);
+        }
+    } else if (!node->children.empty() && depth >= max_depth) {
+        std::cout << prefix << (is_last ? "    " : "│   ") << "... (" << node->children.size() << " children - max depth reached)" << std::endl;
+    }
+}
+
+// Alternative compact version that shows only the most promising paths
+void MCTS::print_best_path(int max_depth) const {
+    if (!root) {
+        std::cout << "Tree is empty" << std::endl;
+        return;
+    }
+    
+    std::cout << "=== Best Path (Highest Win Rate) ===" << std::endl;
+    MCTSNode* current = root;
+    int depth = 0;
+    
+    while (current && depth < max_depth) {
+        // Print current node info
+        std::string indent(depth * 2, ' ');
+        std::cout << indent;
+        
+        if (depth == 0) {
+            std::cout << "ROOT";
+        } else {
+            std::cout << "→ " << current->action;
+        }
+        
+        std::cout << " (Snake " << current->current_snake_idx << ") ";
+        std::cout << "[" << current->total_games << " games, ";
+        
+        if (current->total_games > 0) {
+            double win_rate = current->wins / current->total_games;
+            std::cout << std::fixed << std::setprecision(1) << (win_rate * 100) << "% WR]";
+        } else {
+            std::cout << "0% WR]";
+        }
+        std::cout << std::endl;
+        
+        // Find best child (highest win rate)
+        MCTSNode* best_child = nullptr;
+        double best_win_rate = -1.0;
+        
+        for (MCTSNode* child : current->children) {
+            if (child->total_games > 0) {
+                double win_rate = child->wins / child->total_games;
+                if (win_rate > best_win_rate) {
+                    best_win_rate = win_rate;
+                    best_child = child;
+                }
+            }
+        }
+        
+        current = best_child;
+        depth++;
+    }
+    std::cout << "=================================" << std::endl;
+}
+
+// Utility function to print tree statistics
+void MCTS::print_tree_stats() const {
+    if (!root) {
+        std::cout << "Tree is empty" << std::endl;
+        return;
+    }
+    
+    // Count nodes at each level
+    std::vector<int> level_counts;
+    std::vector<MCTSNode*> current_level = {root};
+    
+    while (!current_level.empty()) {
+        level_counts.push_back(current_level.size());
+        std::vector<MCTSNode*> next_level;
+        
+        for (MCTSNode* node : current_level) {
+            for (MCTSNode* child : node->children) {
+                next_level.push_back(child);
+            }
+        }
+        current_level = next_level;
+    }
+    
+    std::cout << "=== Tree Statistics ===" << std::endl;
+    std::cout << "Tree depth: " << (level_counts.size() - 1) << std::endl;
+    std::cout << "Total root games: " << root->total_games << std::endl;
+    
+    for (size_t i = 0; i < level_counts.size(); ++i) {
+        std::cout << "Level " << i << ": " << level_counts[i] << " nodes" << std::endl;
+    }
+    
+    // Print action distribution for root's children
+    if (!root->children.empty()) {
+        std::cout << "\nRoot children action distribution:" << std::endl;
+        for (MCTSNode* child : root->children) {
+            std::cout << "  " << child->action << ": " << child->total_games << " games";
+            if (child->total_games > 0) {
+                double win_rate = child->wins / child->total_games;
+                std::cout << " (" << std::fixed << std::setprecision(1) << (win_rate * 100) << "% WR)";
+            }
+            std::cout << std::endl;
+        }
+    }
+    std::cout << "======================" << std::endl;
 }

@@ -17,7 +17,7 @@ public:
     double total_games;
     // wins for the current player
     double wins;
-    int current_snake_idx;
+    int current_snake_idx; // index of the snake that is about to move in this state
     char action; // action, that got us to this state
     
     State* node_state;
@@ -49,6 +49,13 @@ public:
     void initialize_tree(const State& state, int snake_idx);
     void perform_iteration(int main_player);
     char find_best_move(const State& state, int snake_idx, int iterations = 1000);
+
+
+    void print_tree(int max_depth = 3) const;
+    void print_best_path(int max_depth = 5) const;
+    void print_tree_stats() const;
+
+    void print_node(MCTSNode* node, int depth, const std::string& prefix, bool is_last, int max_depth) const;
 };
 
 #endif

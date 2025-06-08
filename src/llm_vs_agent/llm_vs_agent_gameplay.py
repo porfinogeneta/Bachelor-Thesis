@@ -13,7 +13,7 @@ from src.llm_vs_agent.llm_caller import LLMCaller
 
 from src.llm_vs_agent.utils import create_game_sequence
 
-from src.consts import APPLES_CORPORA, STANDARD, NO_TAILS
+from src.consts import APPLES_CORPORA, STANDARD, NO_TAILS, MINIMAL
 
 # logger
 from src.logger.logger import setup_logger
@@ -189,5 +189,5 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
 
 if __name__ == "__main__":
     MODEL_NAME = "no_tails_corpora/out_no_tails_corpora_bs_64"
-    CORPORA_TYPE = NO_TAILS
-    print(main(model_configuration=(MODEL_NAME, CORPORA_TYPE), sample_valid_tokens=False, device="mps"))
+    CORPORA_TYPE = MINIMAL
+    print(main(model_configuration=(MODEL_NAME, MINIMAL), sample_valid_tokens=False, device="mps"))

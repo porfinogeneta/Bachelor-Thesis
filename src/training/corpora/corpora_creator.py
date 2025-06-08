@@ -388,6 +388,27 @@ class CorporaCreator:
         
         self.file_save_create_stats_file(corpora=no_tails_corpora, output_folder=output_folder, output_filename=output_filename)
 
+
+    def create_minimal_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path, path_to_apple_corpora: pathlib.Path = None):
+        """
+            Effectively creates apple corpora, but without the tails tokens.
+        """
+        if not path_to_apple_corpora or not path_to_apple_corpora.exists():
+            raise ValueError("Path to apple corpora must be provided for minimal corpora creation.")
+
+        minimal_corpora = []
+
+        with open(path_to_apple_corpora, 'r') as file:
+            apple_corpora = [line.strip() for line in file if line.strip()]
+            
+        for game in apple_corpora:
+            # remove tail tokens
+            no_tail_game = re.sub(r'\sL\d+', '', game.strip())
+            minimal_corpora.append(no_tail_game)
+        self.file_save_create_stats_file(corpora=minimal_corpora, output_folder=output_folder, output_filename=output_filename)
+    
+    
+    
     # def create_tail_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
     #     """
     #         Creates a corpora, that is essentialy standard positions, but if the tail is non-zero
@@ -400,62 +421,65 @@ class CorporaCreator:
     #     pass
 
 
-    def create_standard_corpora_fixed_start(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
-        """
-            Creates standard corpora, but the last game gets a padding to be aligned to the longest game length.
-        """
 
 
-        standard_corpora = self.parse_raw_data_to_tokens()
 
-        fixed_start_corpora = []
+    # def create_standard_corpora_fixed_start(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
+    #     """
+    #         Creates standard corpora, but the last game gets a padding to be aligned to the longest game length.
+    #     """
 
-        # extract max length
-        max_len = max(len(game.split()) for game in standard_corpora)
 
-        one_before_split_point = int(GAMES_IN_RAW_FILE * TRAIN_VAL_SPLIT) - 1
+    #     standard_corpora = self.parse_raw_data_to_tokens()
 
-        for i, game in  enumerate(standard_corpora):
-            game_len = len(game.split())
-            fill_in_length = max_len - game_len
-            padding_tokens_fill = ""
-            # add padding to the last game in train and val split
-            if (i == len(standard_corpora) - 1 or i == one_before_split_point):
-                padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
-            fixed_start_corpora.append(game.strip() + f" {padding_tokens_fill}")
+    #     fixed_start_corpora = []
+
+    #     # extract max length
+    #     max_len = max(len(game.split()) for game in standard_corpora)
+
+    #     one_before_split_point = int(GAMES_IN_RAW_FILE * TRAIN_VAL_SPLIT) - 1
+
+    #     for i, game in  enumerate(standard_corpora):
+    #         game_len = len(game.split())
+    #         fill_in_length = max_len - game_len
+    #         padding_tokens_fill = ""
+    #         # add padding to the last game in train and val split
+    #         if (i == len(standard_corpora) - 1 or i == one_before_split_point):
+    #             padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
+    #         fixed_start_corpora.append(game.strip() + f" {padding_tokens_fill}")
         
 
-        assert len(fixed_start_corpora[-1].split()) == max_len, "This function should add proper padding"
+    #     assert len(fixed_start_corpora[-1].split()) == max_len, "This function should add proper padding"
         
-        with open(output_folder / output_filename, 'w+') as file:
-            for game_line in fixed_start_corpora:
-                file.write(game_line.strip() + "\n") 
+    #     with open(output_folder / output_filename, 'w+') as file:
+    #         for game_line in fixed_start_corpora:
+    #             file.write(game_line.strip() + "\n") 
 
 
 
-        # """
-        #     Creates corpora similar to standard version, but everything is aligned to the longest game.
-        # """
+    #     # """
+    #     #     Creates corpora similar to standard version, but everything is aligned to the longest game.
+    #     # """
         
-        # standard_corpora = self.parse_raw_data_to_tokens()
+    #     # standard_corpora = self.parse_raw_data_to_tokens()
 
-        # aligned_corpora = []
+    #     # aligned_corpora = []
 
-        # # extract max length
-        # max_len = max(len(game.split()) for game in standard_corpora)
+    #     # # extract max length
+    #     # max_len = max(len(game.split()) for game in standard_corpora)
 
-        # # fill each line with padding_tokens so each line is of the same length
-        # for game in standard_corpora:
-        #     game_len = len(game.split())
-        #     fill_in_length = max_len - game_len
-        #     padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
-        #     aligned_corpora.append(game.strip() + f" {padding_tokens_fill}\n")
+    #     # # fill each line with padding_tokens so each line is of the same length
+    #     # for game in standard_corpora:
+    #     #     game_len = len(game.split())
+    #     #     fill_in_length = max_len - game_len
+    #     #     padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
+    #     #     aligned_corpora.append(game.strip() + f" {padding_tokens_fill}\n")
 
         
         
-        # with open(output_folder / output_filename, 'w+') as file:
-        #     for game_line in aligned_corpora:
-        #         file.write(game_line) 
+    #     # with open(output_folder / output_filename, 'w+') as file:
+    #     #     for game_line in aligned_corpora:
+    #     #         file.write(game_line) 
 
 
 
@@ -464,13 +488,14 @@ class CorporaCreator:
 if __name__ == "__main__":
     creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("no_tails_corpora/")
-    OUT_CORP_FILE = pathlib.Path("no_tails20k.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("minimal_corpora/")
+    OUT_CORP_FILE = pathlib.Path("minimal_corpora20k.txt")
     
     # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
     # creator.create_standard_corpora_fixed_start(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
-    creator.create_no_tail_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    # creator.create_no_tail_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    creator.create_minimal_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE, path_to_apple_corpora=CORPORA_DIR / pathlib.Path("apples_corpora/apples_corpora20k.txt"))
 
     # COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions/")
     # OUT_CORP_FILE = pathlib.Path("standard_positions20kp.txt")

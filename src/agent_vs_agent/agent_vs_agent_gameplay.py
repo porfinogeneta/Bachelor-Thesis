@@ -63,12 +63,12 @@ def main():
         if visualize:
             visualizer.visualize_state(state)
 
-        # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
-        if state.turn > 800:
-             if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MCTS_IDX].tail):
-                 return "agent", state
-             else:
-                 return "MCTS", state
+        # # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
+        # if state.turn > 800:
+        #      if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MCTS_IDX].tail):
+        #          return "agent", state
+        #      else:
+        #          return "MCTS", state
 
         # # agent's snake is longer and llm's is dead, no point of further gameplay
         # if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MCTS_IDX].tail) and (MCTS_IDX in state.eliminated_snakes):
@@ -83,6 +83,7 @@ def main():
         if snake_moving_idx == MCTS_IDX:
             
             direction = agent.mcts_based_agent(state, MCTS_IDX, 1000)
+            # input()
             # if sum([len(state.snakes[i].tail) for i in range(n_snakes)]) // state.n_snakes <= 5:
             #     # if the average length of snakes is 7, use BFS
             #     direction = agent.bfs_based_agent(state, MCTS_IDX)
