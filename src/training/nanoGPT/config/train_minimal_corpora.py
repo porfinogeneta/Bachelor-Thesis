@@ -10,7 +10,7 @@ always_save_checkpoint = False
 dataset = 'minimal_corpora'
 gradient_accumulation_steps = 1
 
-batch_size = 512
+batch_size = 320
 block_size = 1600
 
 # baby GPT model :)
