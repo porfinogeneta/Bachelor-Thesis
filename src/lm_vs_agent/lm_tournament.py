@@ -218,6 +218,10 @@ class TournamentManager:
                             direction = self.agent.bfs_based_agent(state, AGENT_IDX)
                         elif agent == "random":
                             direction = self.agent.random_based_agent(state, AGENT_IDX)
+                        elif agent == "mcts":
+                            direction = self.agent.mcts_based_agent(state, AGENT_IDX, 25)
+                        else:
+                            raise ValueError
                         
                         state.move(direction, AGENT_IDX)
                         
@@ -397,20 +401,20 @@ class TournamentManager:
 if __name__ == "__main__":
 
     # script for finding the best approach for defating each agent
-    TESTING_PATH = pathlib.Path("src/llm_vs_agent/tournaments")
+    TESTING_PATH = pathlib.Path("src/lm_vs_agent/tournaments")
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
     # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    MODELS = ["no_tails_corpora/out_no_tails_corpora_bs_3776"]
+    MODELS = ["mcts_standard_positions/out_mcts_standard_positions_fixed_bs_1472"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
-    AGENTS = ["random", "bfs"]
-    # AGENTS = ["bfs"]
+    # AGENTS = ["random", "bfs"]
+    AGENTS = ["bfs"]
 
-    SAMPLE = ["no-sampling", "sampling"]
-    # SAMPLE = ["sampling", "no-sampling"]
+    # SAMPLE = ["sampling"]
+    SAMPLE = ["sampling", "no-sampling"]
 
     MODEL_IDX = [0, 1]
 
@@ -425,7 +429,7 @@ if __name__ == "__main__":
                     logger.info(f"Sampling? {do_sample}")
                     logger.info(f"Index {model_idx}")
 
-                    manager = TournamentManager(model_config=(model_name, NO_TAILS),
+                    manager = TournamentManager(model_config=(model_name, STANDARD),
                                                 device="cuda",
                                                     n_tournaments=1000,
                                                     batch_size=500)
