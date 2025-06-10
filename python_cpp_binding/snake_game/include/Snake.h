@@ -16,6 +16,8 @@ public:
     // moves and tail lengths history after i-th move
     vector<pair<int, int>> moves_history;
     vector<size_t> tails_len_history;
+    // history of last segments of the snake's tail
+    vector<pair<int, int> > tails_last_segments_history;
 
     Snake(int x, int y);
     void move_snake(char direction);

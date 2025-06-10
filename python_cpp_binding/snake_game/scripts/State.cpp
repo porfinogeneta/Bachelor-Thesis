@@ -33,6 +33,7 @@ State::State(int n_snakes, int n_apples, int board_width, int board_height) {
         new_snake.moves_history.push_back(snake_heads[i]);
         // save snake's initial tail length
         new_snake.tails_len_history.push_back(new_snake.tail.size());
+        new_snake.tails_last_segments_history.push_back(new_snake.get_last_snake_segment());
         snakes.push_back(new_snake);
     }
 
@@ -84,6 +85,7 @@ State* State::deepCopy() const {
         // Copy the history
         copiedSnake.moves_history = snake.moves_history;
         copiedSnake.tails_len_history = snake.tails_len_history;
+        copiedSnake.tails_last_segments_history = snake.tails_last_segments_history;
         
         copiedState->snakes.push_back(copiedSnake);
     }
@@ -351,10 +353,12 @@ bool State::move(char direction, int snake_moving_idx){
 
     if (is_snake_colliding_snakes(snakes[snake_moving_idx], snakes) || 
         is_snake_out_of_bounds(snakes[snake_moving_idx]) || 
+        // should not allow to move to the previous segment if snake has only one segment
         (snakes[snake_moving_idx].head == new_snake_segment && snakes[snake_moving_idx].tail.size() == 1)) {
 
-        // add tail length to history 
+        // add tail and last segment position to history 
         snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
+        snakes[snake_moving_idx].tails_last_segments_history.push_back(snakes[snake_moving_idx].get_last_snake_segment());
         
         eliminated_snakes.insert(snake_moving_idx);
         // after the move, update apples history
@@ -385,6 +389,7 @@ bool State::move(char direction, int snake_moving_idx){
 
     // after the move add tail length to history - we are interested in lengths after the move 
     snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
+    snakes[snake_moving_idx].tails_last_segments_history.push_back(snakes[snake_moving_idx].get_last_snake_segment());
 
     turn++;
 
@@ -418,6 +423,7 @@ bool State::move_without_apples_changed(char direction, int snake_moving_idx) {
     
     // after the move add tail length to history 
     snakes[snake_moving_idx].tails_len_history.push_back(snakes[snake_moving_idx].tail.size());
+    snakes[snake_moving_idx].tails_last_segments_history.push_back(snakes[snake_moving_idx].get_last_snake_segment());
 
     turn++;
 
@@ -461,10 +467,26 @@ bool State::is_game_over() {
 const int GROWTH_PER_SEGMENT = 200;
 const int DEATH_PENALTY = -200;
 const int CLOSE_TO_APPLE = 10;
-
+const int KILL_OPPONENT_BONUS = 1000;
 int State::get_winner(const State& prev_state) {
+
     // returns the index of winning snake or -1 if no winner yet
     // winner is calculated based on scores
+    
+    if (is_game_over()){
+        if (snakes[0].tail.size() > snakes[1].tail.size()) {
+            // snake 0 is the winner
+            return 0;
+        }else if (snakes[1].tail.size() > snakes[0].tail.size()) {
+            // snake 1 is the winner
+            return 1;
+
+        }else {
+            // no winner yet, both snakes have the same length
+            return -1;
+        }
+    }
+    
 
     int snake_0_score = 0;
     int snake_1_score = 0;
@@ -488,13 +510,13 @@ int State::get_winner(const State& prev_state) {
     if (prev_state.snakes[0].tail.size() < snakes[0].tail.size()) {
         snake_0_score += GROWTH_PER_SEGMENT * (snakes[0].tail.size() - prev_state.snakes[0].tail.size());
         if (is_snake_1_dead_before){
-            snake_0_score += GROWTH_PER_SEGMENT * (snakes[0].tail.size() - prev_state.snakes[0].tail.size());
+            snake_0_score += 2*GROWTH_PER_SEGMENT * (snakes[0].tail.size() - prev_state.snakes[0].tail.size());
         }
     }
     if (prev_state.snakes[1].tail.size() < snakes[1].tail.size()) {
         snake_1_score += GROWTH_PER_SEGMENT * (snakes[1].tail.size() - prev_state.snakes[1].tail.size());
         if (is_snake_0_dead_before){
-            snake_1_score += GROWTH_PER_SEGMENT * (snakes[1].tail.size() - prev_state.snakes[1].tail.size());
+            snake_1_score += 2*GROWTH_PER_SEGMENT * (snakes[1].tail.size() - prev_state.snakes[1].tail.size());
         }
     }
 
@@ -531,34 +553,28 @@ int State::get_winner(const State& prev_state) {
     //     }
     // }
 
-     // // // if snake 0 was dead before and is still dead, don't give it any points
-    // if (is_snake_0_dead_before){
-    //     snake_0_score -= 10000;
-    // }
-
-    // if (is_snake_1_dead_before){
-    //     snake_1_score -= 10000;
-    // }
     
     if (is_snake_0_dead_now){
         // discourage death of snake, substract points
+        // if (!is_snake_1_dead_before)
         snake_0_score += DEATH_PENALTY;
-        if (is_snake_1_dead_before){
-            snake_0_score += DEATH_PENALTY;
-        }
-        // // if snake_1 is still alive give it points for killing
-        // if (eliminated_snakes.find(1) == eliminated_snakes.end()){
-        //     snake_1_score += KILL_OPPONENT_BONUS;
+        // if (is_snake_1_dead_before){
+        //     snake_0_score += DEATH_PENALTY;
         // }
+        // if snake_1 is still alive give it points for killing
+        if (eliminated_snakes.find(1) == eliminated_snakes.end()){
+            snake_1_score += KILL_OPPONENT_BONUS;
+        }
     }else if (is_snake_1_dead_now) {
+        // if (!is_snake_0_dead_before)
         snake_1_score += DEATH_PENALTY;
-        if (is_snake_0_dead_before){
-            snake_1_score += DEATH_PENALTY;
-        }
-        // // if snake_0 is still alive give it points for killing
-        // if (eliminated_snakes.find(0) == eliminated_snakes.end()){
-        //     snake_0_score += KILL_OPPONENT_BONUS;
+        // if (is_snake_0_dead_before){
+        //     snake_1_score += DEATH_PENALTY;
         // }
+        // if snake_0 is still alive give it points for killing
+        if (eliminated_snakes.find(0) == eliminated_snakes.end()){
+            snake_0_score += KILL_OPPONENT_BONUS;
+        }
     }
 
     if (snake_0_score > snake_1_score) {
@@ -601,6 +617,12 @@ string State::get_full_history() {
         result += "Tail Snake" + to_string(i) + "\n";
         for (const auto& size : snake.tails_len_history) {
             result += to_string(size) + " ";
+        }
+        result += "\n";
+
+        result += "Last segment Snake" + to_string(i) + "\n";
+        for (const auto& segment : snake.tails_last_segments_history) {
+            result += "(" + to_string(segment.first) + "," + to_string(segment.second) + ") ";
         }
         result += "\n";
 

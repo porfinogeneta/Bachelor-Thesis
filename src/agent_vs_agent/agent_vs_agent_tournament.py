@@ -46,7 +46,7 @@ def _play_one_game_task(args_tuple):
         if snake_moving_idx == AGENT_1_IDX:
 
             if agent_1_type == "mcts":
-                direction = agent.mcts_based_agent(state, AGENT_1_IDX, 1000)
+                direction = agent.mcts_based_agent(state, AGENT_1_IDX, 25)
             elif agent_1_type == "bfs":
                 direction = agent.bfs_based_agent(state, AGENT_1_IDX)
             else:
@@ -58,7 +58,7 @@ def _play_one_game_task(args_tuple):
         else:
 
             if agent_0_type == "mcts":
-                direction = agent.mcts_based_agent(state, AGENT_0_IDX, 1000)
+                direction = agent.mcts_based_agent(state, AGENT_0_IDX, 25)
             elif agent_0_type == "bfs":
                 direction = agent.bfs_based_agent(state, AGENT_0_IDX)
             else:
@@ -108,7 +108,13 @@ class Tournament:
             logger.info(f"Running {tournament_amount} games in parallel...")
             for result in tqdm(game_results_iterator, total=tournament_amount, desc="Tournament Progress"):
                 results_from_pool.append(result)
-
+                a0, a1 =0, 0
+                for i, t in results_from_pool:
+                    if i == AGENT_0_IDX:
+                        a0 += 1
+                    else:
+                        a1 += 1
+                logger.debug(f"Current results: {self.agent_0_type} wins: {a0}, {self.agent_1_type} wins: {a1}")
         # Process results
         for winner_idx, turns in results_from_pool:
            

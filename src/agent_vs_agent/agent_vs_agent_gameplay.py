@@ -83,8 +83,8 @@ def main():
         if snake_moving_idx == MCTS_IDX:
             
             # direction = agent.random_based_agent(state, MCTS_IDX)
-            direction = agent.mcts_based_agent(state, MCTS_IDX, 1000)
-            input()
+            direction = agent.mcts_based_agent(state, MCTS_IDX, 25)
+            # input()
             # if sum([len(state.snakes[i].tail) for i in range(n_snakes)]) // state.n_snakes <= 5:
             #     # if the average length of snakes is 7, use BFS
             #     direction = agent.bfs_based_agent(state, MCTS_IDX)
@@ -96,7 +96,7 @@ def main():
           
         else:
 
-
+            # direction = agent.mcts_based_agent(state, AGENT_IDX, 25)
             direction = agent.bfs_based_agent(state, AGENT_IDX)
 
             # given direction move

@@ -21,7 +21,7 @@ public:
     int board_height;
     int turn = 0;
 
-    const int MAX_GAME_LENGTH = 1000;
+    const int MAX_GAME_LENGTH = 750;
 
     // state memory
     vector<Snake> snakes;

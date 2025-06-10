@@ -12,6 +12,8 @@ PYBIND_DIR = PROJECT_PATH / pathlib.Path("python_cpp_binding/")
 CORPORA_DELIMETER = "=================================================="
 CORPORA_DIR = PROJECT_PATH / pathlib.Path("src/training/corpora/")
 RAW_DATA_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k.txt")
+RAW_DATA_TAILS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k_tails.txt")
+RAW_DATA_TAILS_MCTS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k_tails_mcts.txt")
 RAW_TEST_DATA_100 = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history10.txt")
 
 

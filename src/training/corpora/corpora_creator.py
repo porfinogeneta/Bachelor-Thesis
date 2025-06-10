@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pathlib
 import re
 
-from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT
+from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT, RAW_DATA_TAILS_20K
 
 # logger
 from src.logger.logger import setup_logger
@@ -83,11 +83,24 @@ class CorporaCreator:
                 i += 2
                 # print(lines[i].split())
                 tail_lengths = [int(l) for l in lines[i].split()]
+                # logger.debug(f"{ lines[i].strip()}")
+                # go to tail last segment positions
+                i += 2
+                # logger.debug(f"{ lines[i].strip()}")
+                segments_line = lines[i].strip()
+                segments = []
+                segment_pairs = segments_line.split(') (')
+                for pair in segment_pairs:
+                    # Clean up the pairs
+                    pair = pair.replace('(', '').replace(')', '')
+                    x, y = map(int, pair.split(','))
+                    segments.append((x, y))
                 
                 snake_data = {
                     'id': snake_id,
                     'positions': positions,
-                    'tail_lengths': tail_lengths
+                    'tail_lengths': tail_lengths,
+                    'last_segments': segments
                 }
                 
                 current_game['snakes'].append(snake_data)
@@ -294,20 +307,106 @@ class CorporaCreator:
                 
                 corp_line += " "
 
+            corpora.append(corp_line.strip() + ' <END>')
+
+        return corpora
+    
+
+
+    def parse_raw_data_to_tokens_last_segment(self):
+        """
+            Takes data from raw data and returns games in a form of:
+            <START> S0 R8C0 L0 A39 A90 A17 A88 A73 S1 R8C2 L0 A39 A90 A17 A88 A73 S0 R9C0 L1 ...
+        """
+
+        self.games = self.load_raw_data()
+
+
+        corpora = []
+        for game in self.games:
+
+            TURNS = game["turns"]
+            SNAKES = game["snakes"]
+            APPLES = game["apples"]
+
+            
+            corp_line = "<START> "
+
+            si = [1 for _ in range(len(SNAKES))]
+            
+            # set up initial snakes and apples positions
+            apple_i = 0
+            
+            # [Snake0_positions[0]]
+            corp_line += f'S0 R{SNAKES[0]["positions"][0][0]}C{SNAKES[0]["positions"][0][1]} L{SNAKES[0]["tail_lengths"][0]} <TAIL_END> R{SNAKES[0]["last_segments"][0][0]}C{SNAKES[0]["last_segments"][0][1]} '
+            # [apples_positions[0]]
+            corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i]["positions"]])
+            corp_line += " "
+
+         
+            # [Snake1_positions[1]]
+            corp_line += f'S1 R{SNAKES[1]["positions"][0][0]}C{SNAKES[1]["positions"][0][1]} L{SNAKES[1]["tail_lengths"][0]} <TAIL_END> R{SNAKES[1]["last_segments"][0][0]}C{SNAKES[1]["last_segments"][0][1]} '
+            # [apples_positions[0]]
+            corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i]["positions"]])
+            corp_line += " "
+
+            apple_i = 1
+
+            # TURNS + 1 since last turn is also imporant (has a move that resulted in death of the other snake)
+            for turn in range(1, TURNS+1):
+                
+                # 0th snake if move exists
+                if (turn-1) % 2 == 0:
+                    if si[0] < len(SNAKES[0]["positions"]):
+                        # S0 12 7 -> Snake0 is on position (1,2) and has a tail of length 7
+                        corp_line += f'S0 R{SNAKES[0]["positions"][si[0]][0]}C{SNAKES[0]["positions"][si[0]][1]} L{SNAKES[0]["tail_lengths"][si[0]]} <TAIL_END> R{SNAKES[0]["last_segments"][si[0]][0]}C{SNAKES[0]["last_segments"][si[0]][1]} '
+                        # after a move save apple position
+                        if apple_i < len(APPLES):
+                            corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i]["positions"]])
+                            # corp_line += " "
+                            apple_i += 1
+
+                        si[0] += 1
+                    else:
+                        corp_line += f'S0 <DEAD> L{SNAKES[0]["tail_lengths"][-1]} <TAIL_END> R{SNAKES[0]["last_segments"][-1][0]}C{SNAKES[0]["last_segments"][-1][1]} '
+                        corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i-1]["positions"]])
+
+                # 1st snake if move exists
+                elif (turn-1) % 2 == 1:
+                    if si[1] < len(SNAKES[1]["positions"]):
+                        # S1 12 7 -> Snake1 is on position (1,2) and has a tail of length 7
+                        corp_line += f'S1 R{SNAKES[1]["positions"][si[1]][0]}C{SNAKES[1]["positions"][si[1]][1]} L{SNAKES[1]["tail_lengths"][si[1]]} <TAIL_END> R{SNAKES[1]["last_segments"][si[1]][0]}C{SNAKES[1]["last_segments"][si[1]][1]} '
+
+                        # after a move save apple position
+                        if apple_i < len(APPLES):
+                            corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i]["positions"]])
+                            # corp_line += " "
+                            apple_i += 1
+                            
+
+                        si[1] += 1
+                    else:
+                        corp_line += f'S1 <DEAD> L{SNAKES[1]["tail_lengths"][-1]} <TAIL_END> R{SNAKES[1]["last_segments"][-1][0]}C{SNAKES[1]["last_segments"][-1][1]} '
+                        corp_line += " ".join([f'A{r}{c}' for r,c in APPLES[apple_i-1]["positions"]])
+                
+                corp_line += " "
+
             corpora.append(corp_line.strip() + ' <END>\n')
 
         return corpora
-        
+    
 
+    def create_last_segment_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
+        last_segment_corpora = [line.strip() for line in self.parse_raw_data_to_tokens_last_segment()]
+        
+        self.file_save_create_stats_file(corpora=last_segment_corpora, output_folder=output_folder, output_filename=output_filename)
 
     def create_standard_position_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
-        
+        # to pewnie trzeba zmienić żeby wykorzystywać jedną funkcję parsującą
         standard_corpora = self.parse_raw_data_to_tokens()
+        
+        self.file_save_create_stats_file(standard_corpora, output_folder, output_filename)
 
-        # clear the file and add data
-        with open(output_folder / output_filename, 'w') as file:
-            for game_line in standard_corpora:
-                file.write(game_line) 
 
     def create_apple_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
         """
@@ -408,94 +507,22 @@ class CorporaCreator:
         self.file_save_create_stats_file(corpora=minimal_corpora, output_folder=output_folder, output_filename=output_filename)
     
     
-    
-    # def create_tail_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
-    #     """
-    #         Creates a corpora, that is essentialy standard positions, but if the tail is non-zero
-    #         gives the tail position after the special token: <TAIL_END>
-    #     """
-
-    #     standard_corpora = self.parse_raw_data_to_tokens()
-
-    #     tail_corpora = []
-    #     pass
-
-
-
-
-
-    # def create_standard_corpora_fixed_start(self, output_folder: pathlib.Path, output_filename: pathlib.Path):
-    #     """
-    #         Creates standard corpora, but the last game gets a padding to be aligned to the longest game length.
-    #     """
-
-
-    #     standard_corpora = self.parse_raw_data_to_tokens()
-
-    #     fixed_start_corpora = []
-
-    #     # extract max length
-    #     max_len = max(len(game.split()) for game in standard_corpora)
-
-    #     one_before_split_point = int(GAMES_IN_RAW_FILE * TRAIN_VAL_SPLIT) - 1
-
-    #     for i, game in  enumerate(standard_corpora):
-    #         game_len = len(game.split())
-    #         fill_in_length = max_len - game_len
-    #         padding_tokens_fill = ""
-    #         # add padding to the last game in train and val split
-    #         if (i == len(standard_corpora) - 1 or i == one_before_split_point):
-    #             padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
-    #         fixed_start_corpora.append(game.strip() + f" {padding_tokens_fill}")
-        
-
-    #     assert len(fixed_start_corpora[-1].split()) == max_len, "This function should add proper padding"
-        
-    #     with open(output_folder / output_filename, 'w+') as file:
-    #         for game_line in fixed_start_corpora:
-    #             file.write(game_line.strip() + "\n") 
-
-
-
-    #     # """
-    #     #     Creates corpora similar to standard version, but everything is aligned to the longest game.
-    #     # """
-        
-    #     # standard_corpora = self.parse_raw_data_to_tokens()
-
-    #     # aligned_corpora = []
-
-    #     # # extract max length
-    #     # max_len = max(len(game.split()) for game in standard_corpora)
-
-    #     # # fill each line with padding_tokens so each line is of the same length
-    #     # for game in standard_corpora:
-    #     #     game_len = len(game.split())
-    #     #     fill_in_length = max_len - game_len
-    #     #     padding_tokens_fill = " ".join(["<padding_token_0>" for _ in range(fill_in_length)])
-    #     #     aligned_corpora.append(game.strip() + f" {padding_tokens_fill}\n")
-
-        
-        
-    #     # with open(output_folder / output_filename, 'w+') as file:
-    #     #     for game_line in aligned_corpora:
-    #     #         file.write(game_line) 
-
 
 
 
 
 if __name__ == "__main__":
-    creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_20K)
+    creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_TAILS_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("minimal_corpora/")
-    OUT_CORP_FILE = pathlib.Path("minimal_corpora20k.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("mcts_standard_positions/")
+    OUT_CORP_FILE = pathlib.Path("mcts_standard_positions_20k.txt")
     
     # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
-    # creator.create_standard_corpora_fixed_start(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    # creator.create_last_segment_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    creator.create_standard_position_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
     # creator.create_no_tail_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
-    creator.create_minimal_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE, path_to_apple_corpora=CORPORA_DIR / pathlib.Path("apples_corpora/apples_corpora20k.txt"))
+    # creator.create_minimal_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE, path_to_apple_corpora=CORPORA_DIR / pathlib.Path("apples_corpora/apples_corpora20k.txt"))
 
     # COPR_DIR = CORPORA_DIR / pathlib.Path("standard_positions/")
     # OUT_CORP_FILE = pathlib.Path("standard_positions20kp.txt")

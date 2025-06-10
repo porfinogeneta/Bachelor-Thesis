@@ -24,6 +24,7 @@ PYBIND11_MODULE(snake_lib, m) {
         .def_readwrite("tail", &Snake::tail, "Snake's tail segments (vector of pairs of ints)")
         .def_readwrite("moves_history", &Snake::moves_history, "History of snake moves")
         .def_readwrite("tails_len_history", &Snake::tails_len_history, "History of snake tail lengths")
+        .def_readwrite("tails_last_segments_history", &Snake::tails_last_segments_history, "History of last segments of the snake's tail")
         .def("move_snake", &Snake::move_snake, "Move the snake in a given direction")
         .def("get_last_snake_segment", &Snake::get_last_snake_segment, "Get the position of the last tail segment")
         .def("get_last_direction", &Snake::get_last_direction, "Get the last direction the snake moved in");
