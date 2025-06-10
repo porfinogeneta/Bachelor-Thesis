@@ -1,17 +1,17 @@
 
-from src.llm_vs_agent.game_visualizer import GameVisualizer
+from src.lm_vs_agent.game_visualizer import GameVisualizer
 from typing import Tuple
 
 import sys
 import os
 # visualizer
 # from src.snake_game.game_visualizer import GameVisualizer
-from src.llm_vs_agent.game_visualizer import GameVisualizer
+from src.lm_vs_agent.game_visualizer import GameVisualizer
 
 # llm caller
-from src.llm_vs_agent.llm_caller import LLMCaller
+from src.lm_vs_agent.lm_caller import LLMCaller
 
-from src.llm_vs_agent.utils import create_game_sequence
+from src.lm_vs_agent.utils import create_game_sequence
 
 from src.consts import APPLES_CORPORA, STANDARD, NO_TAILS, MINIMAL
 
@@ -86,7 +86,7 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
 
     if visualize:
         # game visualizer
-        visualizer = GameVisualizer(model_idx=MODEL_IDX, snake_name="Zdzisław")
+        visualizer = GameVisualizer(model_idx=MODEL_IDX, snake_name="LM")
 
     
 
@@ -95,26 +95,11 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
         if visualize:
             visualizer.visualize_state(state)
 
-        # # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
-        # if state.turn > 800:
-        #      if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
-        #          return improper_genenerations_cnt, "agent", state
-        #      else:
-        #          return improper_genenerations_cnt, "model", state
-
-        # # agent's snake is longer and llm's is dead, no point of further gameplay
-        # if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail) and (MODEL_IDX in state.eliminated_snakes):
-        #     return improper_genenerations_cnt, "agent", state
-        # # llm's is longer and agent's is dead
-        # elif len(state.snakes[MODEL_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
-        #     return improper_genenerations_cnt, "model", state
             
         # python is snake 1
         snake_moving_idx = state.turn % n_snakes
 
         if snake_moving_idx == MODEL_IDX:
-
-            # print("Python turn")
 
             # snake was eleminated not need for any generation, skip the turn
             if MODEL_IDX in state.eliminated_snakes:
@@ -145,39 +130,21 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
             if ict != [None]:
                 logger.error(ict)
 
-            # given direction move, batch_moves is a lists, hence [0]
             state.move(batch_moves[0], MODEL_IDX)
 
             game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
-
-            # # add current S_MODEL_IDX position
-            # game_sequence += f"S{MODEL_IDX} R{state.snakes[MODEL_IDX].head[0]}C{state.snakes[MODEL_IDX].head[1]} L{len(state.snakes[MODEL_IDX].tail)} "
-            # game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
-
         else:
 
-            # print("Cpp turn")
 
             direction = agent.bfs_based_agent(state, AGENT_IDX)
-            # if agent_type == "random_agent":
-            #     direction = agent.random_based_agent(state, snake_moving_idx)
-            # print(f"Snake {snake_moving_idx} moving: {direction}")
+
 
             # given direction move
             prev_state = state.deepCopy()
             state.move(direction, AGENT_IDX)
 
             game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
-            logger.debug(game_sequence)
-
-            # # add current S_AGENT_IDX position
-            # game_sequence += f"S{AGENT_IDX} R{state.snakes[AGENT_IDX].head[0]}C{state.snakes[AGENT_IDX].head[1]} L{len(state.snakes[AGENT_IDX].tail)} "
-            # game_sequence += " ".join([f'A{apple.position[0]}{apple.position[1]}' for apple in state.apples]) + " "
-
-
-        # print(state.snakes)
-        # print(state.snakes[0].tail)
-        # print(state.snakes[1].tail)
+    
     
     # agent is snake 0
     if len(state.snakes[AGENT_IDX].tail) > len(state.snakes[MODEL_IDX].tail):
@@ -188,6 +155,6 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
 
 
 if __name__ == "__main__":
-    MODEL_NAME = "no_tails_corpora/out_no_tails_corpora_bs_64"
-    CORPORA_TYPE = MINIMAL
-    print(main(model_configuration=(MODEL_NAME, MINIMAL), sample_valid_tokens=False, device="mps"))
+    MODEL_NAME = "standard_positions/out_standard_positions_bs_8"
+    CORPORA_TYPE = STANDARD
+    print(main(model_configuration=(MODEL_NAME, CORPORA_TYPE), sample_valid_tokens=False, device="mps"))

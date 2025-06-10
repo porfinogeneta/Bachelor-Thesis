@@ -114,7 +114,7 @@ double MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
     int snake_turn = current_snake;
     
     while (!rollout_state->is_game_over()
-            && (rollout_state->turn - prev_state->turn) < 8 
+            && (rollout_state->turn - prev_state->turn) < 20
             // && !rollout_state->apples.empty()
         )
     
@@ -137,7 +137,6 @@ double MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
     *passed_turns = rollout_state->turn - prev_state->turn;
 
 
-    // *passed_turns = rollout_state->turn - prev_state->turn;
 
     delete rollout_state;
     delete prev_state; 
@@ -222,7 +221,7 @@ void MCTS::backpropagate(double rollout_winner, int main_player, double score_fo
         // update wins only if the winning snake is the one, whose turn is in the current node
         if ((int) rollout_winner == main_player) {
             // increase by a given score, assosiated with how quicly the win was achived
-            current->wins += 1.0; // current snake won
+            current->wins += 1.0 * (1.0/max(1.0, score_for_winners)); // current snake won
         }
 
         // if (rollout_winner == -1) {
@@ -340,7 +339,7 @@ void MCTS::perform_iteration(int main_player) {
     // increase denominator for all snakes
 
     // give higher score for the snake that won faster, made more greedy moves toward winning
-    double score_for_winners = 1.0 * exp(-(passed_turns));
+    double score_for_winners = passed_turns / 2.0;
 
 
     backpropagate(rollout_winner, main_player, score_for_winners, current);

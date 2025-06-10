@@ -25,7 +25,8 @@ PYBIND11_MODULE(snake_lib, m) {
         .def_readwrite("moves_history", &Snake::moves_history, "History of snake moves")
         .def_readwrite("tails_len_history", &Snake::tails_len_history, "History of snake tail lengths")
         .def("move_snake", &Snake::move_snake, "Move the snake in a given direction")
-        .def("get_last_snake_segment", &Snake::get_last_snake_segment, "Get the position of the last tail segment");
+        .def("get_last_snake_segment", &Snake::get_last_snake_segment, "Get the position of the last tail segment")
+        .def("get_last_direction", &Snake::get_last_direction, "Get the last direction the snake moved in");
 
     // Binding for the State class
     py::class_<State>(m, "State")
@@ -54,7 +55,8 @@ PYBIND11_MODULE(snake_lib, m) {
         .def("get_game_state", &State::get_game_state, "Return string with the current game state")
         .def("get_full_history", &State::get_full_history, "Get the full game history")
         .def("try_move", &State::try_move, "Returns True if the move is valid")
-        .def("deepCopy", &State::deepCopy, py::return_value_policy::take_ownership);
+        .def("deepCopy", &State::deepCopy, py::return_value_policy::take_ownership)
+        .def("get_all_possible_moves", &State::get_all_possible_moves, py::return_value_policy::take_ownership, "Get all possible moves for a snake by its index");
 
     // Binding for the Agent class
     py::class_<Agent>(m, "Agent")

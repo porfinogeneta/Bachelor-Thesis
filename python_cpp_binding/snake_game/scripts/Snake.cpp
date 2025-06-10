@@ -45,5 +45,23 @@ pair<int, int> Snake::get_last_snake_segment(){
     return make_pair(tail.back().first, tail.back().second);
 }
 
+char Snake::get_last_direction() {
+    if (moves_history.size() < 2) {
+        return ' '; 
+    }
+    pair<int, int> last_move = moves_history[moves_history.size() - 1];
+    pair<int, int> second_last_move = moves_history[moves_history.size() - 2];
+
+    if (last_move.first < second_last_move.first) {
+        return 'U';
+    } else if (last_move.first > second_last_move.first) {
+        return 'D';
+    } else if (last_move.second < second_last_move.second) {
+        return 'L';
+    } else {
+        return 'R';
+    }
+}
+
 
 

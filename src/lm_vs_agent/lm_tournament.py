@@ -12,7 +12,7 @@ import sys
 import os
 
 # llm caller
-from src.llm_vs_agent.llm_caller import LLMCaller
+from src.lm_vs_agent.lm_caller import LLMCaller
 
 # logger
 from src.logger.logger import setup_logger
@@ -27,7 +27,7 @@ import argparse
 import sys
 
 
-from src.llm_vs_agent.utils import create_game_sequence
+from src.lm_vs_agent.utils import create_game_sequence
 
 
 # Game configurations

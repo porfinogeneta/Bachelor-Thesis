@@ -1,10 +1,10 @@
 
-from src.llm_vs_agent.game_visualizer import GameVisualizer
+from src.lm_vs_agent.game_visualizer import GameVisualizer
 
 import sys
 # visualizer
 # from src.snake_game.game_visualizer import GameVisualizer
-from src.llm_vs_agent.game_visualizer import GameVisualizer
+from src.lm_vs_agent.game_visualizer import GameVisualizer
 
 
 # logger

@@ -39,20 +39,6 @@ def _play_one_game_task(args_tuple):
 
     while not state.is_game_over():
 
-
-        # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
-        if state.turn > 800:
-            if len(state.snakes[AGENT_0_IDX].tail) > len(state.snakes[AGENT_1_IDX].tail):
-                return AGENT_0_IDX, state.turn
-            else:
-                return AGENT_1_IDX, state.turn
-
-        # agent's snake is longer and llm's is dead, no point of further gameplay
-        if len(state.snakes[AGENT_0_IDX].tail) > len(state.snakes[AGENT_1_IDX].tail) and (AGENT_1_IDX in state.eliminated_snakes):
-            return AGENT_0_IDX, state.turn
-        # llm's is longer and agent's is dead
-        elif len(state.snakes[AGENT_1_IDX].tail) > len(state.snakes[AGENT_0_IDX].tail) and (AGENT_0_IDX in state.eliminated_snakes):
-            return AGENT_1_IDX, state.turn
             
         # python is snake 1
         snake_moving_idx = state.turn % n_snakes
@@ -133,68 +119,14 @@ class Tournament:
             
             self.stats["turns"].append(turns)
         
-        
-    # def run_single_game(self, agent, AGENT_0_IDX, AGENT_1_IDX):
-        
 
-    #     state = snake_lib.State(n_snakes, n_apples, board_width, board_height)
-
-
-    #     while not state.is_game_over():
-
-
-    #         # the game cannot be longer than 800 turns, in this case longer snake wins, regardless of the other being alive
-    #         if state.turn > 800:
-    #             if len(state.snakes[AGENT_0_IDX].tail) > len(state.snakes[AGENT_1_IDX].tail):
-    #                 return AGENT_0_IDX, state
-    #             else:
-    #                 return AGENT_1_IDX, state
-
-    #         # agent's snake is longer and llm's is dead, no point of further gameplay
-    #         if len(state.snakes[AGENT_0_IDX].tail) > len(state.snakes[AGENT_1_IDX].tail) and (AGENT_1_IDX in state.eliminated_snakes):
-    #             return AGENT_0_IDX, state
-    #         # llm's is longer and agent's is dead
-    #         elif len(state.snakes[AGENT_1_IDX].tail) > len(state.snakes[AGENT_0_IDX].tail) and (AGENT_0_IDX in state.eliminated_snakes):
-    #             return AGENT_1_IDX, state
-                
-    #         # python is snake 1
-    #         snake_moving_idx = state.turn % n_snakes
-
-    #         if snake_moving_idx == AGENT_1_IDX:
-
-    #             if self.agent_1_type == "mcts":
-    #                 direction = agent.mcts_based_agent(state, AGENT_1_IDX, 500)
-    #             elif self.agent_1_type == "bfs":
-    #                 direction = agent.bfs_based_agent(state, AGENT_1_IDX)
-    #             else:
-    #                 raise Exception("Incorrect agent")
-    
-    #             # given direction move
-    #             state.move(direction, AGENT_1_IDX)
-            
-    #         else:
-
-    #             if self.agent_0_type == "mcts":
-    #                 direction = agent.mcts_based_agent(state, AGENT_0_IDX, 500)
-    #             elif self.agent_0_type == "bfs":
-    #                 direction = agent.bfs_based_agent(state, AGENT_0_IDX)
-    #             else:
-    #                 raise Exception("Incorrect agent")
-
-    #             # given direction move
-    #             state.move(direction, AGENT_0_IDX)
-   
-    #     if len(state.snakes[AGENT_0_IDX].tail) > len(state.snakes[AGENT_1_IDX].tail):
-    #         return AGENT_0_IDX, state
-    #     else:
-    #         return AGENT_1_IDX, state
 
 if __name__ == "__main__":
     multiprocessing.freeze_support() 
 
     manager = Tournament("mcts", "bfs")
 
-    tournament_games = 5
+    tournament_games = 100
     logger.info(f"Starting tournament with {tournament_games} games...")
     manager.run_tournament(tournament_amount=tournament_games)
 

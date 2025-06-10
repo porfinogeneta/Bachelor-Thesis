@@ -19,6 +19,7 @@ public:
 
     Snake(int x, int y);
     void move_snake(char direction);
+    char get_last_direction();
     pair<int, int> get_last_snake_segment();
 };
 

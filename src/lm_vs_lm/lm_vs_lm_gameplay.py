@@ -1,5 +1,5 @@
 
-from src.llm_vs_agent.game_visualizer import GameVisualizer
+from src.lm_vs_agent.game_visualizer import GameVisualizer
 import subprocess
 import os
 import re
@@ -10,10 +10,10 @@ import sys
 import os
 # visualizer
 # from src.snake_game.game_visualizer import GameVisualizer
-from src.llm_vs_agent.game_visualizer import GameVisualizer
+from src.lm_vs_agent.game_visualizer import GameVisualizer
 
 # llm caller
-from src.llm_vs_agent.llm_caller import LLMCaller
+from src.lm_vs_agent.lm_caller import LLMCaller
 
 # logger
 from src.logger.logger import setup_logger
