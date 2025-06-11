@@ -1,7 +1,7 @@
 # train a miniature character-level shakespeare model
 # good for debugging and playing on macbooks and such
 
-out_dir = 'mcts_standard_positions/out_mcts_standard_positions_fixed_bs_1472'
+out_dir = 'mcts_standard_positions/out_mcts_standard_positions_fixed_bs_2560'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often
@@ -16,10 +16,10 @@ always_save_checkpoint = False
 dataset = 'standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 320
-block_size = 1472
-# batch_size = 192
-# block_size = 2560
+# batch_size = 320
+# block_size = 1472
+batch_size = 192
+block_size = 2560
 
 
 # baby GPT model :)
