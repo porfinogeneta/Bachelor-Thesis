@@ -10,6 +10,8 @@ https://github.com/huggingface/transformers/blob/main/src/transformers/models/gp
 import math
 import inspect
 from dataclasses import dataclass
+import matplotlib.pyplot as plt
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -17,6 +19,11 @@ from torch.nn import functional as F
 
 
 from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
+
+# setup logger
+from src.logger.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 tokenizer = Tokenizer()
 
@@ -337,12 +344,24 @@ class GPT(nn.Module):
             logits, _ = self(idx_cond)
             # pluck the logits at the final step and scale by desired temperature
             logits = logits[:, -1, :] / temperature
+            logits_cpy = logits.clone().detach()
             # optionally crop the logits to only the top k options
             if top_k is not None:
                 v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
                 logits[logits < v[:, [-1]]] = -float('inf')
             # apply softmax to convert logits to (normalized) probabilities
             probs = F.softmax(logits, dim=-1)
+
+
+            # # visualization
+            # all_probs = F.softmax(logits_cpy).clone().detach()
+            # top_all_k = 10
+            # top_probs, top_indices = torch.topk(all_probs, k=top_all_k, dim=-1)
+            # top_probs = top_probs.tolist()[0]
+
+            # print(f"Top {top_all_k} probabilities: {top_probs}")
+            # toks = tokenizer.decode(top_indices.tolist()[0])
+            # print(f"Corresponding indices: {top_indices} {toks}")
 
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1)
@@ -397,6 +416,20 @@ class GPT(nn.Module):
                     
                     # apply softmax to convert logits to (normalized) probabilities
                     item_probs = F.softmax(item_logits, dim=-1)
+
+
+                    # # visualization
+                    # all_probs = item_probs.clone().detach()
+                    # top_all_k = 10
+                    # top_probs, top_indices = torch.topk(all_probs, k=top_all_k, dim=-1)
+                    # top_probs = top_probs.tolist()
+
+                    # print(f"Top {top_all_k} probabilities: {top_probs}")
+                    # toks = tokenizer.decode(top_indices.tolist())
+                    # print(f"Corresponding indices: {top_indices} {toks}")
+
+
+
                     # print(item_probs)
                     # sample max probability token, if no tokens were legal
                     # simply return most probable in any case

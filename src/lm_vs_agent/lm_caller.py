@@ -258,17 +258,17 @@ if __name__ == "__main__":
 
     # INCORRECT SAMPLING VS NO SAMPLING
 
-    lm_caller_sample = LLMCaller(model_name="aligned_games/out_aligned_bs_4352", device="mps")
-    llm_caller_no_sample = LLMCaller(model_name="aligned_games/out_aligned_bs_4352", device="mps")
+    lm_caller_sample = LLMCaller(model_name="standard_positions/out_standard_positions_bs_8", device="mps")
+    llm_caller_no_sample = LLMCaller(model_name="standard_positions/out_standard_positions_bs_8", device="mps")
 
-    sequences = ["<START> S0 R3C2 L0 A50 A67 A54 A82 A88 S1 R7C2 L0 A50 A67 A54 A82 A88 S0 R4C2 L0 A50 A67 A54 A82 A88 S1 R7C2 L0 A50 A67 A54 A82 A88 S0 R4C1 L0 A50 A67 A54 A82 A88 S1 R7C2 L0 A50 A67 A54 A82 A88 S0 R5C1 L0 A50 A67 A54 A82 A88 S1 R7C2 L0 A50 A67 A54 A82 A88 S0 R5C0 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R6C0 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R6C1 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R7C1 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R7C0 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R6C0 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R6C1 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R7C1 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R8C1 L1 A67 A54 A82 A88 A24 S1 R7C2 L0 A67 A54 A82 A88 A24 S0 R8C2 L2 A67 A54 A88 A24 A50 S1 R7C2 L0 A67 A54 A88 A24 A50 S0 R8C3 L2 A67 A54 A88 A24 A50 S1 R7C2 L0 A67 A54 A88 A24 A50 S0 R7C3 L2 A67 A54 A88 A24 A50 S1 R7C2 L0 A67 A54 A88 A24 A50 S0 R6C3 L2 A67 A54 A88 A24 A50 S1 R7C2 L0 A67 A54 A88 A24 A50 S0 R5C3 L2 A67 A54 A88 A24 A50 S1 R7C2 L0 A67 A54 A88 A24 A50 S0 R5C4 L3 A67 A88 A24 A50 A71 S1 R7C2 L0 A67 A88 A24 A50 A71"]
+    sequences = ["<START> S0 R3C2 L0 A50 A67 A54 A82 A88 S1 R7C2 L0 A50 A67 A54 A82 A88"]
     sequences[0] += " S0 "
 
     # run sample
-    sampled = lm_caller_sample.run_lm(prev_heads=[(5,4)], game_sequences=sequences, legal_tokens=[ ["R4C4", "R6C4", "R5C5"]], top_k=None)
+    sampled = lm_caller_sample.run_lm(prev_heads=[(3,2)], game_sequences=sequences, legal_tokens=[ ["R4C2", "R2C2", "R3C1", "R3C3"]], top_k=None)
 
     # run no-sample
-    not_sampled = lm_caller_sample.run_lm(prev_heads=[(5,4)], game_sequences=sequences, legal_tokens=None, top_k=1)
+    not_sampled = lm_caller_sample.run_lm(prev_heads=[(3,2)], game_sequences=sequences, legal_tokens=None, top_k=1)
 
-    logger.debug(f"sampled {sampled}")
-    logger.debug(f"not sampled {not_sampled}")
+    # logger.debug(f"sampled {sampled}")
+    # logger.debug(f"not sampled {not_sampled}")

@@ -108,33 +108,37 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
                 state.turn += 1
                 continue
             
-            prev_state = state.deepCopy()
-            prev_head = state.snakes[MODEL_IDX].head
+            # prev_state = state.deepCopy()
+            # prev_head = state.snakes[MODEL_IDX].head
 
-            if sample_valid_tokens:
+            # if sample_valid_tokens:
 
-                batch_moves, ict, cnt = caller.sample_next_batch_moves_from_legal_tokens(
-                    prev_heads=[prev_head], 
-                    game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
-                    states=[state],
-                    language_model_snake_idx=MODEL_IDX
-                )
+            #     batch_moves, ict, cnt = caller.sample_next_batch_moves_from_legal_tokens(
+            #         prev_heads=[prev_head], 
+            #         game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
+            #         states=[state],
+            #         language_model_snake_idx=MODEL_IDX
+            #     )
 
-            else:
-                batch_moves, ict, cnt = caller.sample_next_batch_moves(
-                    prev_heads=[prev_head], 
-                    game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
-                    top_k=1
-                )
+            # else:
+            #     batch_moves, ict, cnt = caller.sample_next_batch_moves(
+            #         prev_heads=[prev_head], 
+            #         game_sequences=[f"{game_sequence}S{MODEL_IDX}"],
+            #         top_k=1
+            #     )
 
-            improper_genenerations_cnt += cnt
+            # improper_genenerations_cnt += cnt
                     
-            if ict != [None]:
-                logger.error(ict)
+            # if ict != [None]:
+            #     logger.error(ict)
 
-            state.move(batch_moves[0], MODEL_IDX)
+            # state.move(batch_moves[0], MODEL_IDX)
+            # game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
 
-            game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
+
+            direction = agent.random_based_agent(state, MODEL_IDX)
+            state.move(direction, MODEL_IDX)
+
         else:
 
             # CALL GPT HERE
@@ -175,6 +179,6 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
 
 
 if __name__ == "__main__":
-    MODEL_NAME = "standard_positions/out_standard_positions_bs_1600"
+    MODEL_NAME = "standard_positions/out_standard_positions_bs_4352"
     CORPORA_TYPE = STANDARD
-    print(main(model_configuration=(MODEL_NAME, CORPORA_TYPE), sample_valid_tokens=True, device="mps"))
+    print(main(model_configuration=(MODEL_NAME, CORPORA_TYPE), sample_valid_tokens=False, device="mps"))

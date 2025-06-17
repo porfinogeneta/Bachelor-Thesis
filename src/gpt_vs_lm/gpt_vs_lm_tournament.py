@@ -37,6 +37,8 @@ def _play_one_game_task(args_tuple):
     sys.path.append(str(PYBIND_DIR))
     import snake_lib
 
+    agent = snake_lib.Agent()
+
    
 
     model_name, corpora_type, AGENT_0_IDX, AGENT_1_IDX, n_snakes, n_apples, board_width, board_height, sample_valid_tokens, device = args_tuple
@@ -73,21 +75,28 @@ def _play_one_game_task(args_tuple):
             prev_state = state.deepCopy()
             prev_head = state.snakes[AGENT_0_IDX].head
 
-            if sample_valid_tokens:
 
-                batch_moves, ict, _ = caller.sample_next_batch_moves_from_legal_tokens(
-                    prev_heads=[prev_head], 
-                    game_sequences=[f"{game_sequence}S{AGENT_0_IDX}"],
-                    states=[state],
-                    language_model_snake_idx=AGENT_0_IDX
-                )
-
-            else:
-                batch_moves, ict, _ = caller.sample_next_batch_moves(
+            batch_moves, ict, _ = caller.sample_next_batch_moves(
                     prev_heads=[prev_head], 
                     game_sequences=[f"{game_sequence}S{AGENT_0_IDX}"],
                     top_k=1
                 )
+
+            # if sample_valid_tokens:
+
+            #     batch_moves, ict, _ = caller.sample_next_batch_moves_from_legal_tokens(
+            #         prev_heads=[prev_head], 
+            #         game_sequences=[f"{game_sequence}S{AGENT_0_IDX}"],
+            #         states=[state],
+            #         language_model_snake_idx=AGENT_0_IDX
+            #     )
+
+            # else:
+            #     batch_moves, ict, _ = caller.sample_next_batch_moves(
+            #         prev_heads=[prev_head], 
+            #         game_sequences=[f"{game_sequence}S{AGENT_0_IDX}"],
+            #         top_k=1
+            #     )
                     
             if ict != [None]:
                 logger.error(ict)
@@ -95,6 +104,9 @@ def _play_one_game_task(args_tuple):
             state.move(batch_moves[0], AGENT_0_IDX)
 
             game_sequence = create_game_sequence(corpora_type, game_sequence, prev_state, state)
+
+            # direction = agent.random_based_agent(state, AGENT_0_IDX)
+            # state.move(direction, AGENT_0_IDX)
         else:
 
             # CALL GPT HERE
@@ -111,6 +123,7 @@ def _play_one_game_task(args_tuple):
                 "sys_msg": DEFAULT_PROMPT[0],
                 "human_msg": DEFAULT_PROMPT[1],
             }
+
 
             direction, _ = gpt_caller.get_gpt_action(prompt=prompt, sample=sample_valid_tokens, state=state)
             

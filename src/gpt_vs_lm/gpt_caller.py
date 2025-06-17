@@ -4,6 +4,7 @@ from langchain_community.callbacks.manager import get_openai_callback
 from langchain_community.chat_models import MiniMaxChat
 import time
 import random
+import os
 
 # logger
 from src.logger.logger import setup_logger
@@ -11,10 +12,11 @@ from src.logger.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-
+# MINIMAX_API_KEY = os.environ.get('MINIMAX_API_KEY')
+MINIMAX_API_KEY = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJHcm91cE5hbWUiOiJDenlzenltIE15c3p5Y3oiLCJVc2VyTmFtZSI6IkN6eXN6eW0gTXlzenljeiIsIkFjY291bnQiOiIiLCJTdWJqZWN0SUQiOiIxODg0ODE0MzcwMjg2ODcwODI4IiwiUGhvbmUiOiIiLCJHcm91cElEIjoiMTg4NDgxNDM3MDI4MjY3NjUyNCIsIlBhZ2VOYW1lIjoiIiwiTWFpbCI6InN6eW1hbjEyM2RydW1AZ21haWwuY29tIiwiQ3JlYXRlVGltZSI6IjIwMjUtMDYtMDkgMTk6NTM6NTkiLCJUb2tlblR5cGUiOjEsImlzcyI6Im1pbmltYXgifQ.zCNHWzaMcZt0oi6k560WpJJiV_MNd2woJZ91jNIpoqDi5Z4ULjiRrt_Ei10KP7STk85zy4wp7ib0g0wAbKDZDas7lrk_3okihpn6KGbL4t61sv_1ONuGSU_PwdnszRSN9q_HBhBAWymeAp3vYD0N-7RecQ-2uWL9hYzrxmoCjD-RJU-eNwvsRYjRXonF4phFC1m3zgZ1WzSTpNZzklq_XTYwalJVuL429XfqsE9qstaIZZXgWYvFvHbNwvy1zky0Hm8KLK_l9nPC41aqlt1fQ-ZzD-Je3d5flfhsAVGXslyRqfFAz0DSkecwBWipVjD4K2O9qMsmXM_gv-N7cv7unA"
 
 llm = MiniMaxChat(
-    api_key=API_KEY,
+    api_key=MINIMAX_API_KEY,
     model='MiniMax-Text-01',
     # temperature=...,
     # other params...
@@ -27,7 +29,7 @@ class GPTCaller:
         self.snake_idx = snake_idx
 
     
-    def create_board(self, state):
+    def create_board_str(self, state):
         """
         Creates a board representation based on the current state of the game.
         """
@@ -68,7 +70,7 @@ class GPTCaller:
     #     x, y = tuple_
     #     return y, x
 
-    def create_board_state_str(self, state):
+    def create_board_state_dict(self, state):
 
         # create dictionary state representation
         state_dict = {
@@ -86,7 +88,7 @@ class GPTCaller:
             "turn": state.turn,
         }
 
-        return json.dumps(state_dict, indent=2)
+        return state_dict
     
     def get_gpt_action(self, prompt: dict, sample: bool, state):
         """
@@ -95,7 +97,7 @@ class GPTCaller:
 
         assert self.snake_idx not in state.eliminated_snakes, "Elliminated snake should be able to call GPT"
 
-        board_state_str = self.create_board_state_str(state)
+        board = self.create_board_state_dict(state)
 
 
 
@@ -107,18 +109,35 @@ class GPTCaller:
         )
 
     
-        board = self.create_board(state)
-    
+        board_str = self.create_board_str(state)
+
+        # dirs to emojis
+        emoji_dir = {
+            "U": "⬆️",
+            "D": "⬇️",
+            "L": "⬅️",
+            "R": "➡️"
+        }
+       
 
         messages = template.format_messages(
             snake_idx=self.snake_idx,
             opponent_idx=1 - self.snake_idx,
-            chars_board=board,
-            board_state_str=json.dumps(board_state_str, indent=2)
+            chars_board={board_str},
+            board_state_dict={json.dumps(board)}
+            # apples=board["apples"],
+            # head=board["snakes"][self.snake_idx]["head"],
+            # tail=board["snakes"][self.snake_idx]["tail"],
+            # enemy_head=board["snakes"][1 - self.snake_idx]["head"],
+            # enemy_tail=board["snakes"][1 - self.snake_idx]["tail"],
+            # game_board=board_str,
+            # previous_move=emoji_dir.get(board["snakes"][self.snake_idx]["direction"], "⬆️")
         )
 
+
+        logger.debug(messages)
+
         # logger.debug(f"GPT prompt: {messages}")
-        
         # # OpenAI API call with the callback to get the response message but also the cost and tokens used in the callback
         # t0 = time()
         # with get_openai_callback() as cb:
@@ -142,6 +161,7 @@ class GPTCaller:
         # logger.debug(f"GPT response: {model_response.content}")
         
         # Getting the direction from the LLM response and the arrow emoji in it
+        managed_to_gen = True
         if "⬆️" == emoji:
             dir = "U"
         elif "⬇️" == emoji:
@@ -151,7 +171,7 @@ class GPTCaller:
         elif "➡️" == emoji:
             dir = "R"
         else: 
-            
+            managed_to_gen = False
             dir = random.choice(["U", "D", "L", "R"])
             logger.error("GPT didn't return a valid direction")
             logger.error(f"GPT response: {model_response}")
@@ -162,7 +182,10 @@ class GPTCaller:
             if not possible_moves:
                 dir = random.choice(["U", "D", "L", "R"])
             else:
-                dir = random.choice(possible_moves)
+                if not managed_to_gen:
+                    dir = random.choice(["U", "D", "L", "R"])
+                if dir not in possible_moves:
+                    dir = random.choice(possible_moves)
         
         return dir, model_response
 
