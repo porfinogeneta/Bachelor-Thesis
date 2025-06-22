@@ -358,7 +358,7 @@ char MCTS::find_best_move(const State& state, int main_snake, int iterations) {
     }
     
 
-    print_tree(3);
+    // print_tree(3);
 
     MCTSNode* best_move_node = nullptr;
     double max_win_rate = -1.0;

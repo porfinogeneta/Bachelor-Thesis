@@ -1,6 +1,6 @@
 
 from src.lm_vs_agent.game_visualizer import GameVisualizer
-
+import time
 import sys
 # visualizer
 # from src.snake_game.game_visualizer import GameVisualizer
@@ -56,7 +56,7 @@ def main():
         # game visualizer
         visualizer = GameVisualizer(model_idx=MCTS_IDX, snake_name="MCTS")
 
-    
+    time.sleep(5)
 
     while not state.is_game_over():
 
@@ -76,6 +76,8 @@ def main():
         # # llm's is longer and agent's is dead
         # elif len(state.snakes[MCTS_IDX].tail) > len(state.snakes[AGENT_IDX].tail) and (AGENT_IDX in state.eliminated_snakes):
         #     return "MCTS", state
+
+        
             
         # python is snake 1
         snake_moving_idx = state.turn % n_snakes
@@ -83,8 +85,8 @@ def main():
         if snake_moving_idx == MCTS_IDX:
             
             # direction = agent.random_based_agent(state, MCTS_IDX)
-            direction = agent.bfs_based_agent(state, MCTS_IDX)
-            # direction = agent.mcts_based_agent(state, MCTS_IDX, 25)
+            # direction = agent.bfs_based_agent(state, MCTS_IDX)
+            direction = agent.mcts_based_agent(state, MCTS_IDX, 25)
             # input()
             # if sum([len(state.snakes[i].tail) for i in range(n_snakes)]) // state.n_snakes <= 5:
             #     # if the average length of snakes is 7, use BFS
