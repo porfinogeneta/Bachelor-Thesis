@@ -4,7 +4,7 @@
 
 # python3 train.py --out_dir="out_standard_positions_bs_1600" --dataset="standard_positions" --compile=True --device="cuda"  config/train_standard_positions.py | tee "/home/ubuntu/Bachelor-Thesis/src/training/train_configs/standard_positions/out_standard_positions_bs_1600.txt"
 
-out_dir = 'mcts_standard_positions/out_mcts_standard_positions_bs_2560'
+out_dir = 'mcts_standard_positions/out_mcts_standard_positions_bs_2560v2'
 eval_interval = 250 # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10 # don't print too too often

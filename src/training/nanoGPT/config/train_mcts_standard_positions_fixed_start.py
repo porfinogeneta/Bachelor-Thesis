@@ -9,11 +9,8 @@ log_interval = 10 # don't print too too often
 # we expect to overfit on this small dataset, so only save when val improves
 always_save_checkpoint = False
 
-# wandb_log = False # override via command line if you like
-# wandb_project = 'standard_positions'
-# wandb_run_name = 'mini-gpt'
 
-dataset = 'standard_positions'
+dataset = 'mcts_standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
 # batch_size = 320

@@ -159,7 +159,7 @@ class GPTCaller:
         emoji = model_response.content[last_index:last_index+len("⬆️")].strip() if last_index != -1 else None
         # logger.debug(f"Emoji found in GPT response: {emoji}")
         # logger.debug(f"GPT response: {model_response.content}")
-        
+
         # Getting the direction from the LLM response and the arrow emoji in it
         managed_to_gen = True
         if "⬆️" == emoji:
