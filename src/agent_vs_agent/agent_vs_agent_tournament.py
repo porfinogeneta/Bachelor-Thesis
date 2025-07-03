@@ -46,7 +46,7 @@ def _play_one_game_task(args_tuple):
         if snake_moving_idx == AGENT_1_IDX:
 
             if agent_1_type == "mcts":
-                direction = agent.mcts_based_agent(state, AGENT_1_IDX, 25)
+                direction = agent.mcts_based_agent(state, AGENT_1_IDX, 1000)
             elif agent_1_type == "bfs":
                 direction = agent.bfs_based_agent(state, AGENT_1_IDX)
             elif agent_1_type == "random":
@@ -60,7 +60,7 @@ def _play_one_game_task(args_tuple):
         else:
 
             if agent_0_type == "mcts":
-                direction = agent.mcts_based_agent(state, AGENT_0_IDX, 25)
+                direction = agent.mcts_based_agent(state, AGENT_0_IDX, 1000)
             elif agent_0_type == "bfs":
                 direction = agent.bfs_based_agent(state, AGENT_0_IDX)
             elif agent_0_type == "random":
@@ -134,7 +134,7 @@ class Tournament:
 if __name__ == "__main__":
     multiprocessing.freeze_support() 
 
-    manager = Tournament("random", "bfs")
+    manager = Tournament("mcts", "bfs")
 
     tournament_games = 1000
     logger.info(f"Starting tournament with {tournament_games} games...")
