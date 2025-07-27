@@ -245,149 +245,6 @@ char Agent::random_based_agent(const State &state, int current_snake_idx) {
 
 }
 
-// char Agent::random_complete_agent(
-//                 const State &state,
-//                 int current_snake_idx
-//             )
-//         {
-
-
-//         set<pair <int, int> > apples_positions = get_positions_occupied_by_apples(state.apples);
-//         set<pair <int, int> > snake_positions = get_positions_occupiend_by_snakes(current_snake_idx, state.snakes);
-
-//         // possible positions, from them we sample
-//         vector<char> viable_normal_moves;
-
-//         // create viable moves, greedy approach of always choosing position with an apple and free position
-//         // if nothing is available, greedy approach ensures shorter games, since snakes grow quicker
-//         pair<int, int> current_snake_head = state.snakes[current_snake_idx].head;
-//         // UP
-//         pair<int, int> up_pair = make_pair(current_snake_head.first - 1, current_snake_head.second);
-//         if (!is_position_in_set(up_pair, snake_positions) && !is_position_out_of_bounds(up_pair, state.board_width, state.board_height)){
-//             viable_normal_moves.push_back('U');
-//         }
-
-//         // DOWN
-//         pair<int, int> down_pair = make_pair(current_snake_head.first + 1, current_snake_head.second);
-//         if (!is_position_in_set(down_pair, snake_positions) && !is_position_out_of_bounds(down_pair, state.board_width, state.board_height)){
-//             viable_normal_moves.push_back('D');
-//         }
-
-//         // LEFT
-//         pair<int, int> left_pair = make_pair(current_snake_head.first, current_snake_head.second - 1);
-//         if (!is_position_in_set(left_pair, snake_positions) && !is_position_out_of_bounds(left_pair, state.board_width, state.board_height)){
-//             viable_normal_moves.push_back('L');
-//         }
-
-//         // RIGHT
-//         pair<int, int> right_pair = make_pair(current_snake_head.first, current_snake_head.second + 1);
-//         if (!is_position_in_set(right_pair, snake_positions) && !is_position_out_of_bounds(right_pair, state.board_width, state.board_height)){
-//             viable_normal_moves.push_back('R');
-//         }
-
-//         if (viable_normal_moves.empty()){
-//             // if no free direction is found, go in any direction
-//             // best_dir = getRandomChar();
-//             cout << "No free direction found, choosing random move" << endl;
-//             viable_normal_moves.push_back(getRandomChar());
-//         }
-
-//         // randomy sample move
-//         return chose_random_vector_element(viable_normal_moves);
-// }
-
-
-// char Agent::manhattan_distance(
-//                 const pair<int, int> &a,
-//                 const pair<int, int> &b
-//             ){
-//         // calculate manhattan distance between two points
-//         return abs(a.first - b.first) + abs(a.second - b.second);
-//     }
-
-
-// char Agent::greedy_based_agent(
-//                 const State &state,
-//                 int current_snake_idx
-//             ){
-//         // this agent is based on choosing a position that is would lead to be closer to the apple
-//         // whenever possible we choose position that won't cause the death of the snake
-        
-//         // get current snake position
-//         int x = state.snakes[current_snake_idx].head.first;
-//         int y = state.snakes[current_snake_idx].head.second;
-
-
-//         set<pair <int, int> > apples_positions = get_positions_occupied_by_apples(state.apples);
-//         set<pair <int, int> > snake_positions = get_positions_occupiend_by_snakes(current_snake_idx, state.snakes);
-
-//         int min_dist = std::numeric_limits<int>::max();
-
-//         pair<int, int> closest_apple = make_pair(x, y);
-
-//         if (!state.apples.empty()) {
-//             for (const auto& apple : state.apples) {
-//                 int dist = manhattan_distance(head, apple);
-//                 if (dist < min_dist) {
-//                     min_dist = dist;
-//                     closest_apple = apple.position;
-//                 }
-//             }
-//         }
-
-//         vector<char> possible_moves = state.get_all_possible_moves(snake_turn);
-
-//         if (possible_moves.empty()) {
-//             return 'U';
-//         }
-
-//         // Score moves: positive is good, negative is bad
-//         map<char, int> move_scores;
-
-//         for (char move : possible_moves) {
-//             state.move(move, snake_turn);
-//             int score = 0;
-
-//             // is the head after the move in apples
-//             if (state.is_apple_at(next_pos)) {
-//                 score += 1000;
-//             }
-
-//             // Rule 2: Medium priority - does this move get closer to the nearest apple?
-//             if (closest_apple.x != -1) {
-//                 int dist_after_move = manhattan_distance(next_pos, closest_apple);
-//                 if (dist_after_move < min_dist) {
-//                     score += 100; // Reward for getting closer
-//                 }
-//             }
-            
-//             // Rule 3: Low priority - try to move towards the center to have more space
-//             // (Assuming you have board_width and board_height in your state)
-//             // int center_x = state.board_width / 2;
-//             // int center_y = state.board_height / 2;
-//             // int dist_from_center_now = manhattan_distance(head, {center_x, center_y});
-//             // int dist_from_center_next = manhattan_distance(next_pos, {center_x, center_y});
-//             // if(dist_from_center_next < dist_from_center_now){
-//             //     score += 10;
-//             // }
-
-//             move_scores[move] = score;
-//         }
-
-//         // Find the move with the best score
-//         char best_move = possible_moves[0];
-//         int max_score = -1;
-
-//         for (const auto& pair : move_scores) {
-//             if (pair.second > max_score) {
-//                 max_score = pair.second;
-//                 best_move = pair.first;
-//             }
-//         }
-
-//         return best_move;
-// }
-
 
 char Agent::mcts_based_agent(
                 const State &state,
@@ -400,3 +257,16 @@ char Agent::mcts_based_agent(
             return mcts.find_best_move(state, current_snake_idx, iterations);
         }
     
+
+char Agent::minimax_based_agent(
+                const State &state,
+                int current_snake_idx,
+                int depth
+            )
+        {
+            Minimax minimax;
+
+            State state_copy = *state.deepCopy();
+
+            return minimax.find_best_move(state_copy, current_snake_idx, depth);
+        }

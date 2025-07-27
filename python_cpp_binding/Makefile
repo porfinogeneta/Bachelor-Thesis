@@ -92,6 +92,7 @@ SOURCES = $(SCRIPTS_DIR)/Agent.cpp \
           $(SCRIPTS_DIR)/Snake.cpp \
           $(SCRIPTS_DIR)/State.cpp \
 		  $(SCRIPTS_DIR)/MCTS.cpp \
+		  $(SCRIPTS_DIR)/Minimax.cpp \
           pybind.cpp
 
 # Object files (in build directory)

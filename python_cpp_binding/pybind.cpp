@@ -57,12 +57,14 @@ PYBIND11_MODULE(snake_lib, m) {
         .def("get_full_history", &State::get_full_history, "Get the full game history")
         .def("try_move", &State::try_move, "Returns True if the move is valid")
         .def("deepCopy", &State::deepCopy, py::return_value_policy::take_ownership)
+        .def("get_winner", &State::get_winner, py::return_value_policy::take_ownership)
         .def("get_all_possible_moves", &State::get_all_possible_moves, py::return_value_policy::take_ownership, "Get all possible moves for a snake by its index");
 
     // Binding for the Agent class
     py::class_<Agent>(m, "Agent")
         .def(py::init<>(), "Construct an Agent object")
         .def("bfs_based_agent", &Agent::bfs_based_agent, "Get move based on BFS algorithm")
+        .def("minimax_based_agent", &Agent::minimax_based_agent, "Get move based on minimax algorithm")
         .def("mcts_based_agent", &Agent::mcts_based_agent, "Get move based on MCTS algorithm")
         .def("random_based_agent", &Agent::random_based_agent, "Get move based on Random algorithm");
 

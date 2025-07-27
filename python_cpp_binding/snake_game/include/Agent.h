@@ -4,6 +4,7 @@
 #include "Snake.h"
 #include "Apple.h"
 #include "State.h"
+#include "Minimax.h"
 
 #ifndef AGENT_H
 #define AGENT_H
@@ -27,6 +28,11 @@ public:
 
     char mcts_based_agent(
         const State &state, int current_snake_idx, int iterations
+    );
+
+
+    char minimax_based_agent(
+        const State &state, int current_snake_idx, int depth
     );
 
     char random_complete_agent(

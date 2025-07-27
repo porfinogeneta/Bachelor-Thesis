@@ -133,7 +133,7 @@ double MCTS::rollout(const State& state, int current_snake, int* passed_turns) {
     // returns 0 on S0 winning
     // 1 on S1 winning
     // -1 on tie
-    int winner = rollout_state->get_winner(*prev_state);
+    int winner = rollout_state->evaluate_winner(*prev_state);
     *passed_turns = rollout_state->turn - prev_state->turn;
 
 
