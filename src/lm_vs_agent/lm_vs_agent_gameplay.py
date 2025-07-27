@@ -136,8 +136,9 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
         else:
 
 
-            # direction = agent.mcts_based_agent(state, AGENT_IDX, 25)
-            direction = agent.bfs_based_agent(state, AGENT_IDX)
+            direction = agent.mcts_based_agent(state, AGENT_IDX, 25)
+            # direction = agent.bfs_based_agent(state, AGENT_IDX)
+            # direction = agent.minimax_based_agent(state, AGENT_IDX, 8)
 
             # given direction move
             prev_state = state.deepCopy()
@@ -156,6 +157,7 @@ def main(model_configuration: Tuple[str, str], sample_valid_tokens: bool, device
 
 if __name__ == "__main__":
     # MODEL_NAME = "mcts_standard_positions/out_mcts_standard_positions_bs_2560"
-    MODEL_NAME = "standard_positions/out_standard_positions_bs_4352"
+    # MODEL_NAME = "standard_positions/out_standard_positions_bs_4352"
+    MODEL_NAME = "masked_training_verbose_mcts/out_masked_training_verbose_mcts_bs_4352"
     CORPORA_TYPE = STANDARD
     print(main(model_configuration=(MODEL_NAME, CORPORA_TYPE), sample_valid_tokens=True, device="mps"))

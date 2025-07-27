@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 import multiprocessing
 
-from src.consts import PYBIND_DIR, RAW_DATA_20K, RAW_DATA_TAILS_20K, RAW_DATA_TAILS_MCTS_20K
+from src.consts import PYBIND_DIR, RAW_DATA_20K, RAW_DATA_TAILS_20K, RAW_DATA_MINIMAX_20K
 
 # cpp code
 module_path = '/Users/szymon/Documents/Bachelor-Thesis/python_cpp_binding/'
@@ -40,7 +40,8 @@ def _play_one_game_task(dummy_arg):
        
         snake_moving_idx = state.turn % n_snakes
 
-        direction = agent.mcts_based_agent(state, snake_moving_idx, 25)
+        # direction = agent.mcts_based_agent(state, snake_moving_idx, 25)
+        direction = agent.minimax_based_agent(state, snake_moving_idx, 8)
 
         state.move(direction, snake_moving_idx)
 
@@ -73,5 +74,5 @@ class DataGenerator:
 if __name__ == "__main__":
     generator = DataGenerator()
 
-    generator.create_data(20000, RAW_DATA_TAILS_MCTS_20K)
+    generator.create_data(20000, RAW_DATA_MINIMAX_20K)
 

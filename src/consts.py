@@ -22,6 +22,7 @@ RAW_DATA_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_h
 RAW_DATA_TAILS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k_tails.txt")
 RAW_DATA_TAILS_MCTS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k_tails_mcts.txt")
 RAW_TEST_DATA_100 = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history10.txt")
+RAW_DATA_MINIMAX_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history_minimax20k.txt")
 
 
 

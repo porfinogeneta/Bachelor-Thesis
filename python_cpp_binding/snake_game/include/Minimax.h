@@ -14,7 +14,7 @@ using namespace std;
 class Minimax {
 public:
    
-    double minimax(const State& initial_state, State& state, int depth, bool isMaximizingPlayer);
+    double minimax(const State& initial_state, State& state, int depth, bool isMaximizingPlayer, double alpha, double beta);
 
     char find_best_move(const State& state, int current_snake_idx, int depth);
 };

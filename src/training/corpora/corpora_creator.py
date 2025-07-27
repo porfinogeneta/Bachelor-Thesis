@@ -514,7 +514,7 @@ class CorporaCreator:
 if __name__ == "__main__":
     creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_TAILS_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("mcts_standard_positions/")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("minimax_standard_positions/")
     OUT_CORP_FILE = pathlib.Path("mcts_standard_positions_20k.txt")
     
     # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)

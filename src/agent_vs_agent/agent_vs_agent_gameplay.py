@@ -68,7 +68,7 @@ def main():
         snake_moving_idx = state.turn % N_SNAKES
 
         if snake_moving_idx == MCTS_IDX:
-            direction = agent.minimax_based_agent(state, MCTS_IDX, 8)
+            direction = agent.minimax_based_agent(state, MCTS_IDX, 10)
             # direction = agent.mcts_based_agent(state, MCTS_IDX, 25)
   
             # given direction move

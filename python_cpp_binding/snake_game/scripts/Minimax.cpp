@@ -6,7 +6,7 @@
 // isMaximizingPlayer = false <=> snake_idx = 0
 
 // accepts root state, state after the move, depth, and whether the player is maximizing or minimizing
-double Minimax::minimax(const State& initial_state, State& state, int depth, bool isMaximizingPlayer) {
+double Minimax::minimax(const State& initial_state, State& state, int depth, bool isMaximizingPlayer, double alpha, double beta) {
 
     // miximized player is the snake that is about to move in the initial state
     int maximized_player = (initial_state.turn % initial_state.n_snakes);
@@ -36,9 +36,14 @@ double Minimax::minimax(const State& initial_state, State& state, int depth, boo
 
             state_cpy.move(dir, maximized_player);
 
-            double eval = minimax(initial_state, state_cpy, depth - 1, false);
+            double eval = minimax(initial_state, state_cpy, depth - 1, false, alpha, beta);
 
             maxEval = max(maxEval, eval);
+
+            alpha = max(alpha, eval);
+            if (beta <= alpha) {
+                break; // Beta cut-off
+            }
         }
 
         return maxEval;
@@ -58,9 +63,11 @@ double Minimax::minimax(const State& initial_state, State& state, int depth, boo
             state_cpy.move(dir, minimized_player);
 
             // eval should be negative for minimaxing player, and the scoring function returns positive values
-            double eval = minimax(initial_state, state_cpy, depth - 1, true);
+            double eval = minimax(initial_state, state_cpy, depth - 1, true, alpha, beta);
 
             minEval = min(minEval, eval);
+
+            beta = min(beta, eval);
         }
 
         return minEval;
@@ -88,7 +95,7 @@ char Minimax::find_best_move(const State& state, int current_snake_idx, int dept
 
         state_cpy.move(dir, current_snake_idx);
 
-        double eval = minimax(state, state_cpy, depth - 1, false);
+        double eval = minimax(state, state_cpy, depth - 1, false, -10000, 10000);
 
         if (eval_dir.first < eval){
             eval_dir.first = eval;
