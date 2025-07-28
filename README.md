@@ -18,8 +18,7 @@ albo tak:
 sudo apt-get update && sudo apt-get install git-lfs && git clone https://github.com/porfinogeneta/Bachelor-Thesis.git && pip install --upgrade pip setuptools wheel
 
 
-git lfs fetch --all
-git lfs pull
+git lfs fetch --all && git lfs pull
 
 on the root to VM run: pip install --upgrade pip setuptools wheel
 
