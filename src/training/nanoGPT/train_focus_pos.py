@@ -76,8 +76,8 @@ compile = True # use PyTorch 2.0 to compile the model to be faster
 
 # MODIFICATION
 # tokens that will be used to train the model
-target_token_min = 20
-target_token_max = 80
+target_token_min = 6
+target_token_max = 149
 
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]

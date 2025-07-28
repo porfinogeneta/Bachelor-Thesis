@@ -15,16 +15,16 @@ always_save_checkpoint = False
 # wandb_project = 'standard_positions'
 # wandb_run_name = 'mini-gpt'
 
-dataset = 'standard_positions'
+dataset = 'mcts_standard_positions'
 gradient_accumulation_steps = 1
 # 64 256
-# batch_size = 128
-# block_size = 4352 # context of up to 2816 previous characters
+batch_size = 128
+block_size = 4352 # context of up to 2816 previous characters
 # batch_size = 64
 # block_size = 2866 # context of up to 2816 previous characters
 
-batch_size = 8
-block_size = 64
+# batch_size = 8
+# block_size = 64
 
 # baby GPT model :)
 n_layer = 6
@@ -40,6 +40,6 @@ beta2 = 0.99 # make a bit bigger because number of tokens per iter is small
 
 warmup_iters = 100 # not super necessary potentially
 
-# on macbook also add
-device = 'mps'  # run on cpu only
-compile = False # do not torch compile the model
+# # on macbook also add
+# device = 'mps'  # run on cpu only
+# compile = False # do not torch compile the model

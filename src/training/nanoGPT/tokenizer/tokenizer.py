@@ -10,13 +10,15 @@ class Tokenizer:
         apple_tokens = [f"A{i}{j}" for j in range(board_width) for i in range(board_height)]
         special_tokens = ["<START>", "<END>", "<DEAD>", "<HELPER_TAG>"]
 
+        print(len(special_tokens), len(snake_tokens), len(head_position_tokens), len(tail_lengths_tokens), len(apple_tokens))
+
         self.all_tokens = special_tokens + snake_tokens + head_position_tokens + tail_lengths_tokens + apple_tokens
 
         # add special tokens for 64 training padding
         current_len = len(self.all_tokens)
         to_add = 64 - (current_len % 64)
 
-        CORPORA_EXTENSION_TOKENS = ["<APPLES_UNCHANGED>", "<TAIL_END>"] 
+        CORPORA_EXTENSION_TOKENS = ["<APPLES_UNCHANGED>", "<TAIL_END>", "<SNAKE0_WINS>", "<SNAKE1_WINS>", "<DRAW>"] 
 
         to_add -= len(CORPORA_EXTENSION_TOKENS)
 
@@ -55,4 +57,5 @@ if __name__ == "__main__":
     # print(encoded)
     # print(tokenizer.decode(encoded))
 
-    print(tokenizer.encode("<START>"))
+    print(tokenizer.encode("S1"))
+    print(tokenizer.decode([150]))
