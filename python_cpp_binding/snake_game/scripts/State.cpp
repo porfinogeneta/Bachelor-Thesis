@@ -726,13 +726,13 @@ double State::score_state(const State& initial_state) {
     // penalty for dying
     if (!is_snake_alive(maximized_player)) {
         // cout << "Penalty for dying, returning -100" << endl;
-        return -150.0;
+        score -=15.0;
     }
 
     // penalty for blocking the maximized snake
     if (is_snake_alive(maximized_player) && get_all_possible_moves(maximized_player).empty()){
         // cout << "Blocked maximized snake, returning -100" << endl;
-        return -150.0;
+        score  -=15.0;
     }
 
     // killing the opponent score
@@ -740,7 +740,7 @@ double State::score_state(const State& initial_state) {
         && !is_snake_alive(minimized_player)
         ) {
             // cout << "Killed opponent, adding score normal" << endl;
-            score += 100.0;
+            score += 30.0;
     }
 
 
@@ -768,11 +768,18 @@ double State::score_state(const State& initial_state) {
 
         // which snake is closer to any apple
         for (const Apple& apple : apples) {
-            double max_dist_maximized = abs(snakes[maximized_player].head.first - apple.position.first) + abs(snakes[maximized_player].head.second - apple.position.second);
-            double min_dist_minimized = abs(snakes[minimized_player].head.first - apple.position.first) + abs(snakes[minimized_player].head.second - apple.position.second);
+            double dist_maximized = abs(snakes[maximized_player].head.first - apple.position.first) + abs(snakes[maximized_player].head.second - apple.position.second);
+            double dist_minimized = abs(snakes[minimized_player].head.first - apple.position.first) + abs(snakes[minimized_player].head.second - apple.position.second);
 
-            if (max_dist_maximized < min_dist_minimized) {
-                cloest_apples_amount++;
+            // bonus for being closer to an apple than the enemy
+            if (dist_maximized < dist_minimized) {
+                // cloest_apples_amount++;
+                score += 0.25;
+            }
+
+            // bonus for being just close to an apple
+            if (dist_maximized <= 2) {
+                score += 0.25;
             }
         }
 
@@ -782,7 +789,7 @@ double State::score_state(const State& initial_state) {
         uniform_real_distribution<double> distr(0.0, 1.0);
         double random_factor = distr(gen);
 
-        score += 0.25 * cloest_apples_amount + random_factor;
+        // score += 0.25 * cloest_apples_amount;
     }
 
     

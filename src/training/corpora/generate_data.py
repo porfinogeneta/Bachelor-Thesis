@@ -41,7 +41,7 @@ def _play_one_game_task(dummy_arg):
         snake_moving_idx = state.turn % n_snakes
 
         # direction = agent.mcts_based_agent(state, snake_moving_idx, 25)
-        direction = agent.minimax_based_agent(state, snake_moving_idx, 8)
+        direction = agent.minimax_based_agent(state, snake_moving_idx, 4)
 
         state.move(direction, snake_moving_idx)
 

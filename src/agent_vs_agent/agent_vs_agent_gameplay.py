@@ -49,8 +49,8 @@ def main():
 
     # MCTS_IDX = random.choice([0, 1])
     # AGENT_IDX = 1 if MODEL_IDX == 0 else 0
-    MCTS_IDX = 0
-    AGENT_IDX = 1
+    MCTS_IDX = 1
+    AGENT_IDX =0
 
     if visualize:
         # game visualizer
@@ -68,7 +68,7 @@ def main():
         snake_moving_idx = state.turn % N_SNAKES
 
         if snake_moving_idx == MCTS_IDX:
-            direction = agent.minimax_based_agent(state, MCTS_IDX, 10)
+            direction = agent.minimax_based_agent(state, MCTS_IDX, 8)
             # direction = agent.mcts_based_agent(state, MCTS_IDX, 25)
   
             # given direction move

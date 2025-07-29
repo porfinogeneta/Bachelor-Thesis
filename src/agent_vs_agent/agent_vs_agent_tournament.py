@@ -48,7 +48,7 @@ def _play_one_game_task(args_tuple):
             if agent_1_type == "mcts":
                 direction = agent.mcts_based_agent(state, AGENT_1_IDX, 1000)
             elif agent_1_type == "minimax":
-                direction = agent.minimax_based_agent(state, AGENT_1_IDX, 8)
+                direction = agent.minimax_based_agent(state, AGENT_1_IDX, 4)
             elif agent_1_type == "bfs":
                 direction = agent.bfs_based_agent(state, AGENT_1_IDX)
             elif agent_1_type == "random":
@@ -64,7 +64,7 @@ def _play_one_game_task(args_tuple):
             if agent_0_type == "mcts":
                 direction = agent.mcts_based_agent(state, AGENT_0_IDX, 1000)
             elif agent_0_type == "minimax":
-                direction = agent.minimax_based_agent(state, AGENT_0_IDX, 8)
+                direction = agent.minimax_based_agent(state, AGENT_0_IDX, 4)
             elif agent_0_type == "bfs":
                 direction = agent.bfs_based_agent(state, AGENT_0_IDX)
             elif agent_0_type == "random":
@@ -95,8 +95,8 @@ class Tournament:
     def run_tournament(self, tournament_amount: int):
         # AGENT_1_IDX = random.choice([0, 1])
         # AGENT_0_IDX = 1 if MODEL_IDX == 0 else 0
-        AGENT_0_IDX = 0
-        AGENT_1_IDX = 1
+        AGENT_0_IDX = 1
+        AGENT_1_IDX = 0
 
         tasks_args = []
         for _ in range(tournament_amount):
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     manager = Tournament("minimax", "bfs")
 
-    tournament_games = 50
+    tournament_games = 500
     logger.info(f"Starting tournament with {tournament_games} games...")
     manager.run_tournament(tournament_amount=tournament_games)
 
