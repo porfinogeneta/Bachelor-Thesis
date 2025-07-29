@@ -2,6 +2,7 @@ import sys
 import os
 from tqdm import tqdm
 import multiprocessing
+import gc
 
 from src.consts import PYBIND_DIR, RAW_DATA_20K, RAW_DATA_TAILS_20K, RAW_DATA_MINIMAX_20K
 
@@ -45,13 +46,21 @@ def _play_one_game_task(dummy_arg):
 
         state.move(direction, snake_moving_idx)
 
-    return state.get_full_history()
+    result = state.get_full_history()
+
+    del state
+    del agent
+    gc.collect()
+
+    return result
         
 
 
 class DataGenerator:
 
 
+    def __init__(self):
+        self.max_workers = min(os.cpu_count(), 8)
 
     def create_data(self, samples: int, output: str):
         results_from_pool = []
