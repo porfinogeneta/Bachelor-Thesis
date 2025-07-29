@@ -84,7 +84,7 @@ POSITION_TOKEN_MIN = 6
 POSITION_TOKEN_MAX = 149
 
 # Weighting parameters
-winning_snake_weight = 2.0  # Weight multiplier for winning snake's position tokens
+winning_snake_weight = 3.0  # Weight multiplier for winning snake's position tokens
 losing_snake_weight = 1.0   # Weight for losing snake's position tokens
 tie_weight = 1.0           # Weight when game is a tie
 non_position_weight = 1.0   # Weight for non-position tokens
@@ -131,13 +131,128 @@ ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=
 
 
 
+# def create_winning_snake_weighted_mask(input_tokens, target_tokens):
+#     """
+#     Create a weighted mask that prioritizes position tokens from the winning snake.
+    
+#     Args:
+#         input_tokens: tensor of shape (batch_size, seq_len) - input sequence
+#         target_tokens: tensor of shape (batch_size, seq_len) - target sequence
+    
+#     Returns:
+#         weights: tensor of same shape with weights for each target token
+#         masked_targets: target tokens with non-position tokens set to -100
+#         metrics: dict with statistics about the weighting
+#     """
+#     batch_size, seq_len = target_tokens.shape
+#     weights = torch.ones_like(target_tokens, dtype=torch.float32, device=target_tokens.device)
+#     masked_targets = target_tokens.clone()
+    
+#     # Statistics tracking
+#     total_position_tokens = 0
+#     winning_snake_position_tokens = 0
+#     losing_snake_position_tokens = 0
+#     tie_position_tokens = 0
+    
+#     # Process each sequence in the batch
+#     for batch_idx in range(batch_size):
+#         input_seq = input_tokens[batch_idx]
+#         target_seq = target_tokens[batch_idx]
+        
+#         # Find the winner for this game by looking for winner tokens in the input sequence
+#         # since batches start with the winner token we are interseted in first occurence
+#         winner = None
+
+#         for t in input_seq:
+#             if t == SNAKE0_WINS_TOKEN:
+#                 winner = 0
+#                 break
+#             elif t == SNAKE1_WINS_TOKEN:
+#                 winner = 1
+#                 break
+#             elif t == TIE_TOKEN:
+#                 winner = 2
+#                 break
+
+#         # if SNAKE0_WINS_TOKEN in input_seq:
+#         #     winner = 0  # Snake 0 wins
+#         # elif SNAKE1_WINS_TOKEN in input_seq:
+#         #     winner = 1  # Snake 1 wins
+#         # elif TIE_TOKEN in input_seq:
+#         #     winner = 2  # Tie
+        
+#         # If we can't determine the winner, use default weights
+#         if winner is None:
+#             # Set non-position tokens to -100 (ignored)
+#             position_mask = (target_seq >= POSITION_TOKEN_MIN) & (target_seq <= POSITION_TOKEN_MAX)
+#             masked_targets[batch_idx][~position_mask] = -100
+#             continue
+        
+#         # Process each token in the sequence
+#         for token_idx in range(seq_len):
+#             target_token = target_seq[token_idx].item()
+            
+#             # Check if this is a position token
+#             if POSITION_TOKEN_MIN <= target_token <= POSITION_TOKEN_MAX:
+#                 total_position_tokens += 1
+                
+#                 # Determine which snake this position token belongs to
+#                 # Look at the previous token in the input sequence
+#                 # and than apply weights based on the winnner
+#                 if token_idx > 0:
+#                     prev_token = input_seq[token_idx - 1].item()
+                    
+#                     if prev_token == SNAKE0_TOKEN:  # This position belongs to snake 0
+#                         if winner == 0:  # Snake 0 wins
+#                             weights[batch_idx, token_idx] = winning_snake_weight
+#                             winning_snake_position_tokens += 1
+#                         elif winner == 1:  # Snake 1 wins (snake 0 loses)
+#                             weights[batch_idx, token_idx] = losing_snake_weight
+#                             losing_snake_position_tokens += 1
+#                         else:  # Tie
+#                             weights[batch_idx, token_idx] = tie_weight
+#                             tie_position_tokens += 1
+                            
+#                     elif prev_token == SNAKE1_TOKEN:  # This position belongs to snake 1
+#                         if winner == 1:  # Snake 1 wins
+#                             weights[batch_idx, token_idx] = winning_snake_weight
+#                             winning_snake_position_tokens += 1
+#                         elif winner == 0:  # Snake 0 wins (snake 1 loses)
+#                             weights[batch_idx, token_idx] = losing_snake_weight
+#                             losing_snake_position_tokens += 1
+#                         else:  # Tie
+#                             weights[batch_idx, token_idx] = tie_weight
+#                             tie_position_tokens += 1
+#                     else:
+#                         # Previous token is not a snake token, use default weight
+#                         weights[batch_idx, token_idx] = non_position_weight
+#                 else:
+#                     # First token, use default weight
+#                     weights[batch_idx, token_idx] = non_position_weight
+#             else:
+#                 # Non-position token - set to -100 (ignored by loss)
+#                 masked_targets[batch_idx, token_idx] = -100
+#                 weights[batch_idx, token_idx] = 0.0  # Will be ignored anyway
+    
+#     metrics = {
+#         'total_position_tokens': total_position_tokens,
+#         'winning_snake_tokens': winning_snake_position_tokens,
+#         'losing_snake_tokens': losing_snake_position_tokens,
+#         'tie_tokens': tie_position_tokens,
+#         'avg_weight': weights[masked_targets != -100].mean().item() if (masked_targets != -100).any() else 0.0
+#     }
+    
+#     return weights, masked_targets, metrics
+
+
 def create_winning_snake_weighted_mask(input_tokens, target_tokens):
     """
     Create a weighted mask that prioritizes position tokens from the winning snake.
+    This is a vectorized version that avoids Python loops for performance.
     
     Args:
-        input_tokens: tensor of shape (batch_size, seq_len) - input sequence
-        target_tokens: tensor of shape (batch_size, seq_len) - target sequence
+        input_tokens: tensor of shape (batch_size, seq_len)
+        target_tokens: tensor of shape (batch_size, seq_len)
     
     Returns:
         weights: tensor of same shape with weights for each target token
@@ -145,101 +260,73 @@ def create_winning_snake_weighted_mask(input_tokens, target_tokens):
         metrics: dict with statistics about the weighting
     """
     batch_size, seq_len = target_tokens.shape
-    weights = torch.ones_like(target_tokens, dtype=torch.float32, device=target_tokens.device)
+    device = target_tokens.device
+    
+    # --- 1. Find the winner for each game in the batch (Vectorized) ---
+    # Create a tensor to hold the winner for each sequence in the batch
+    # 0: Snake 0 wins, 1: Snake 1 wins, 2: Tie, -1: No winner found
+    winners = torch.full((batch_size,), -1, dtype=torch.long, device=device)
+    
+    # Check for the presence of winner tokens in each input sequence
+    winners[torch.any(input_tokens == SNAKE0_WINS_TOKEN, dim=1)] = 0
+    winners[torch.any(input_tokens == SNAKE1_WINS_TOKEN, dim=1)] = 1
+    winners[torch.any(input_tokens == TIE_TOKEN, dim=1)] = 2
+    
+    # Unsqueeze to allow broadcasting with (batch_size, seq_len) tensors
+    winners = winners.unsqueeze(1) # Shape: (batch_size, 1)
+
+    # --- 2. Create boolean masks for all conditions ---
+    # Mask for all position tokens in the target
+    is_position_token = (target_tokens >= POSITION_TOKEN_MIN) & (target_tokens <= POSITION_TOKEN_MAX)
+
+    # Get the previous token for each position in the input sequence
+    # We roll the tensor and invalidate the first token's "previous" token
+    prev_input_tokens = torch.roll(input_tokens, shifts=1, dims=1)
+    prev_input_tokens[:, 0] = -1 # Avoid wrap-around at the first position
+
+    # Masks for which snake the previous token belonged to
+    prev_is_s0 = (prev_input_tokens == SNAKE0_TOKEN)
+    prev_is_s1 = (prev_input_tokens == SNAKE1_TOKEN)
+    
+    # --- 3. Apply weights using the masks (Vectorized) ---
+    # Start with default weights
+    weights = torch.full_like(target_tokens, non_position_weight, dtype=torch.float32)
+    weights[is_position_token] = 1.0 # Default weight for a position token
+
+    # Combine masks to create final condition masks
+    # Condition: Is a position token AND previous token was S0 AND S0 won
+    s0_wins_mask = is_position_token & prev_is_s0 & (winners == 0)
+    # Condition: Is a position token AND previous token was S0 AND S0 lost (S1 won)
+    s0_loses_mask = is_position_token & prev_is_s0 & (winners == 1)
+    s0_ties_mask = is_position_token & prev_is_s0 & (winners == 2)
+    
+    # Condition: Is a position token AND previous token was S1 AND S1 won
+    s1_wins_mask = is_position_token & prev_is_s1 & (winners == 1)
+    # Condition: Is a position token AND previous token was S1 AND S1 lost (S0 won)
+    s1_loses_mask = is_position_token & prev_is_s1 & (winners == 0)
+    s1_ties_mask = is_position_token & prev_is_s1 & (winners == 2)
+    
+    # Apply weights based on the combined masks
+    weights[s0_wins_mask | s1_wins_mask] = winning_snake_weight
+    weights[s0_loses_mask | s1_loses_mask] = losing_snake_weight
+    weights[s0_ties_mask | s1_ties_mask] = tie_weight
+    
+    # --- 4. Create masked_targets and finalize weights ---
     masked_targets = target_tokens.clone()
+    masked_targets[~is_position_token] = -100 # Mask non-position tokens
+    weights[~is_position_token] = 0.0 # Set weight for masked tokens to 0
     
-    # Statistics tracking
-    total_position_tokens = 0
-    winning_snake_position_tokens = 0
-    losing_snake_position_tokens = 0
-    tie_position_tokens = 0
-    
-    # Process each sequence in the batch
-    for batch_idx in range(batch_size):
-        input_seq = input_tokens[batch_idx]
-        target_seq = target_tokens[batch_idx]
-        
-        # Find the winner for this game by looking for winner tokens in the input sequence
-        # since batches start with the winner token we are interseted in first occurence
-        winner = None
-
-        for t in input_seq:
-            if t == SNAKE0_WINS_TOKEN:
-                winner = 0
-                break
-            elif t == SNAKE1_WINS_TOKEN:
-                winner = 1
-                break
-            elif t == TIE_TOKEN:
-                winner = 2
-                break
-
-        # if SNAKE0_WINS_TOKEN in input_seq:
-        #     winner = 0  # Snake 0 wins
-        # elif SNAKE1_WINS_TOKEN in input_seq:
-        #     winner = 1  # Snake 1 wins
-        # elif TIE_TOKEN in input_seq:
-        #     winner = 2  # Tie
-        
-        # If we can't determine the winner, use default weights
-        if winner is None:
-            # Set non-position tokens to -100 (ignored)
-            position_mask = (target_seq >= POSITION_TOKEN_MIN) & (target_seq <= POSITION_TOKEN_MAX)
-            masked_targets[batch_idx][~position_mask] = -100
-            continue
-        
-        # Process each token in the sequence
-        for token_idx in range(seq_len):
-            target_token = target_seq[token_idx].item()
-            
-            # Check if this is a position token
-            if POSITION_TOKEN_MIN <= target_token <= POSITION_TOKEN_MAX:
-                total_position_tokens += 1
-                
-                # Determine which snake this position token belongs to
-                # Look at the previous token in the input sequence
-                # and than apply weights based on the winnner
-                if token_idx > 0:
-                    prev_token = input_seq[token_idx - 1].item()
-                    
-                    if prev_token == SNAKE0_TOKEN:  # This position belongs to snake 0
-                        if winner == 0:  # Snake 0 wins
-                            weights[batch_idx, token_idx] = winning_snake_weight
-                            winning_snake_position_tokens += 1
-                        elif winner == 1:  # Snake 1 wins (snake 0 loses)
-                            weights[batch_idx, token_idx] = losing_snake_weight
-                            losing_snake_position_tokens += 1
-                        else:  # Tie
-                            weights[batch_idx, token_idx] = tie_weight
-                            tie_position_tokens += 1
-                            
-                    elif prev_token == SNAKE1_TOKEN:  # This position belongs to snake 1
-                        if winner == 1:  # Snake 1 wins
-                            weights[batch_idx, token_idx] = winning_snake_weight
-                            winning_snake_position_tokens += 1
-                        elif winner == 0:  # Snake 0 wins (snake 1 loses)
-                            weights[batch_idx, token_idx] = losing_snake_weight
-                            losing_snake_position_tokens += 1
-                        else:  # Tie
-                            weights[batch_idx, token_idx] = tie_weight
-                            tie_position_tokens += 1
-                    else:
-                        # Previous token is not a snake token, use default weight
-                        weights[batch_idx, token_idx] = non_position_weight
-                else:
-                    # First token, use default weight
-                    weights[batch_idx, token_idx] = non_position_weight
-            else:
-                # Non-position token - set to -100 (ignored by loss)
-                masked_targets[batch_idx, token_idx] = -100
-                weights[batch_idx, token_idx] = 0.0  # Will be ignored anyway
+    # --- 5. Calculate metrics (Vectorized) ---
+    winning_snake_tokens = (s0_wins_mask | s1_wins_mask).sum().item()
+    losing_snake_tokens = (s0_loses_mask | s1_loses_mask).sum().item()
+    tie_tokens = (s0_ties_mask | s1_ties_mask).sum().item()
     
     metrics = {
-        'total_position_tokens': total_position_tokens,
-        'winning_snake_tokens': winning_snake_position_tokens,
-        'losing_snake_tokens': losing_snake_position_tokens,
-        'tie_tokens': tie_position_tokens,
-        'avg_weight': weights[masked_targets != -100].mean().item() if (masked_targets != -100).any() else 0.0
+        'total_position_tokens': is_position_token.sum().item(),
+        'winning_snake_tokens': winning_snake_tokens,
+        'losing_snake_tokens': losing_snake_tokens,
+        'tie_tokens': tie_tokens,
+        'avg_weight': weights[weights > 0].mean().item() if (weights > 0).any() else 0.0
     }
     
     return weights, masked_targets, metrics

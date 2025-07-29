@@ -61,20 +61,25 @@ class DataGenerator:
 
 
     def __init__(self):
-        self.max_workers = min(os.cpu_count(), 8)
+        self.max_workers = max(os.cpu_count() // 2, 1)
 
     def create_data(self, samples: int, output: str):
         results_from_pool = []
+
+        pool_options = {
+            "processes": self.max_workers,
+            "maxtasksperchild": 1,  # Limit the number of tasks per worker to avoid memory leaks
+        }
         
         # Determine the number of processes to use. Default is os.cpu_count().
-        with multiprocessing.Pool() as pool:
+        with multiprocessing.Pool(**pool_options) as pool:
             game_results_iterator = pool.imap_unordered(_play_one_game_task, range(samples))
             
             logger.info(f"Running {samples} games in parallel...")
-            for result in tqdm(game_results_iterator, total=samples, desc="Tournament Progress"):
-                # results_from_pool.append(result)
-                with open(output, "a") as file:
-                    file.write(result + "\n")
+            with open(output, "a") as file:
+                for result in tqdm(game_results_iterator, total=samples, desc="Tournament Progress"):
+                    # results_from_pool.append(result)
+                        file.write(result + "\n")
                 
             
 
