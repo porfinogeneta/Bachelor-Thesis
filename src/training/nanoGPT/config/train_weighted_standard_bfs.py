@@ -13,11 +13,11 @@ always_save_checkpoint = False
 # wandb_project = 'standard_positions'
 # wandb_run_name = 'mini-gpt'
 
-dataset = 'standard_positions'
+dataset = 'bfs_standard_positions' # name of the training corpus
 gradient_accumulation_steps = 1
 # 64 256
-batch_size = 256
-block_size = 1600
+batch_size = 512
+block_size = 1472
 # batch_size = 128
 # block_size = 4352 # context of up to 2816 previous characters
 # batch_size = 64

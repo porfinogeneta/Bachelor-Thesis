@@ -22,6 +22,8 @@ class Tokenizer:
 
         to_add -= len(CORPORA_EXTENSION_TOKENS)
 
+        # print(f"Adding {to_add} padding tokens to tokenizer...")  # Debugging output
+
         assert to_add > 0
 
         for i in range(to_add):
@@ -57,5 +59,5 @@ if __name__ == "__main__":
     # print(encoded)
     # print(tokenizer.decode(encoded))
 
-    print(tokenizer.encode("S1"))
+    print(tokenizer.encode("<DRAW>"))
     print(tokenizer.decode([150]))

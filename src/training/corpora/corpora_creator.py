@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pathlib
 import re
 
-from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_TEST_DATA_100, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT, RAW_DATA_TAILS_20K
+from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_DATA_BFS_20K, RAW_TEST_DATA_10, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT, RAW_DATA_TAILS_20K
 
 # logger
 from src.logger.logger import setup_logger
@@ -218,7 +218,7 @@ class CorporaCreator:
                     f"90th percentile: {token_stats['p90']}\n"
                     f"Max turn length: {stats['max_turns']}\n")
     
-    def parse_raw_data_to_tokens(self):
+    def parse_raw_data_to_tokens(self) -> List[str]:
         """
             Takes data from raw data and returns games in a form of:
             <START> S0 R8C0 L0 A39 A90 A17 A88 A73 S1 R8C2 L0 A39 A90 A17 A88 A73 S0 R9C0 L1 ...
@@ -507,20 +507,69 @@ class CorporaCreator:
         self.file_save_create_stats_file(corpora=minimal_corpora, output_folder=output_folder, output_filename=output_filename)
     
     
+    def create_determine_winner_corpora(self, output_folder: pathlib.Path, output_filename: pathlib.Path) -> str:
+
+
+
+        standard_corpora = self.parse_raw_data_to_tokens()
+
+        # print(f"Number of games in standard corpora: {len(standard_corpora)}")
+
+        determined_winner_corpus = []
+        
+        for game in standard_corpora:
+            tokens = game.split()
+
+            # print(tokens)
+
+            # find you who has longer tail at the end of the game
+            max_tail_0 = 0
+            max_tail_1 = 0
+            for i,t in enumerate(tokens):
+
+                direct_number = -1
+                if t == "S0" or t == "S1":
+                
+                    match = re.search(r'L(\d+)', tokens[i + 2])
+                    
+                    if match:
+                        direct_number = int(match.group(1))
+                    else:
+                        raise ValueError("Expected Length to be a number!")
+                
+                if t == "S0":
+                    max_tail_0 = max(direct_number, max_tail_0)
+                elif t == "S1":
+                    max_tail_1 = max(direct_number, max_tail_1)
+                else:
+                    continue
+                
+            
+            if max_tail_0 > max_tail_1:
+                determined_winner_corpus.append("<SNAKE0_WINS> " + game)
+            elif max_tail_0 < max_tail_1:
+                determined_winner_corpus.append("<SNAKE1_WINS> " + game)
+            else:
+                determined_winner_corpus.append("<DRAW> " + game)
+
+        self.file_save_create_stats_file(corpora=determined_winner_corpus, output_folder=output_folder, output_filename=output_filename)
 
 
 
 
 if __name__ == "__main__":
-    creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_TAILS_20K)
+    
+    # creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_TAILS_20K)
+    creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_BFS_20K)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("minimax_standard_positions/")
-    OUT_CORP_FILE = pathlib.Path("mcts_standard_positions_20k.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("bfs_standard_win_lost")
+    OUT_CORP_FILE = pathlib.Path("bfs_standard_win_lost.txt")
     
     # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
     # creator.create_last_segment_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
-    creator.create_standard_position_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    # creator.create_standard_position_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
+    creator.create_determine_winner_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
     # creator.create_no_tail_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
     # creator.create_minimal_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE, path_to_apple_corpora=CORPORA_DIR / pathlib.Path("apples_corpora/apples_corpora20k.txt"))
 

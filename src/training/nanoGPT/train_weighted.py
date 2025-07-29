@@ -75,11 +75,11 @@ dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported
 compile = True # use PyTorch 2.0 to compile the model to be faster
 
 # MODIFICATION
-SNAKE0_TOKEN = 3
-SNAKE1_TOKEN = 4
-SNAKE0_WINS_TOKEN = 200
-SNAKE1_WINS_TOKEN = 201
-TIE_TOKEN = 202
+SNAKE0_TOKEN = 4
+SNAKE1_TOKEN = 5
+SNAKE0_WINS_TOKEN = 381
+SNAKE1_WINS_TOKEN = 382
+TIE_TOKEN = 383
 POSITION_TOKEN_MIN = 6
 POSITION_TOKEN_MAX = 149
 
