@@ -10,7 +10,7 @@ class Tokenizer:
         apple_tokens = [f"A{i}{j}" for j in range(board_width) for i in range(board_height)]
         special_tokens = ["<START>", "<END>", "<DEAD>", "<HELPER_TAG>"]
 
-        print(len(special_tokens), len(snake_tokens), len(head_position_tokens), len(tail_lengths_tokens), len(apple_tokens))
+        # print(len(special_tokens), len(snake_tokens), len(head_position_tokens), len(tail_lengths_tokens), len(apple_tokens))
 
         self.all_tokens = special_tokens + snake_tokens + head_position_tokens + tail_lengths_tokens + apple_tokens
 

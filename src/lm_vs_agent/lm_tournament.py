@@ -405,7 +405,7 @@ if __name__ == "__main__":
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
     # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    MODELS = ["mcts_standard_positions/out_mcts_standard_positions_fixed_bs_2560"]
+    MODELS = ["masked_standard_bfs/out_masked_standard_bfs_bs_4352"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
@@ -432,7 +432,7 @@ if __name__ == "__main__":
                     manager = TournamentManager(model_config=(model_name, STANDARD),
                                                 device="cuda",
                                                     n_tournaments=500,
-                                                    batch_size=500)
+                                                    batch_size=250)
 
                     #    manager.run_unpadded_tournaments(output_file="tournamnets_results_legal_tokens_only.txt", sample_valid_tokens=True)
                     output_directory = PROJECT_PATH / TESTING_PATH / model_name / agent_type / do_sample / f"model_idx_{model_idx}"

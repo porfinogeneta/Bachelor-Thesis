@@ -7,8 +7,8 @@ BOARD_WIDTH = 10
 BOARD_HEIGHT = 10
 
 
-PROJECT_PATH = pathlib.Path("/Users/szymon/Documents/Bachelor-Thesis")
-# PROJECT_PATH = pathlib.Path("/home/ubuntu/Bachelor-Thesis")
+# PROJECT_PATH = pathlib.Path("/Users/szymon/Documents/Bachelor-Thesis")
+PROJECT_PATH = pathlib.Path("/root/Bachelor-Thesis")
 NANOGPT_DIR = PROJECT_PATH / pathlib.Path("src/training/nanoGPT/")
 
 # PYBIND
