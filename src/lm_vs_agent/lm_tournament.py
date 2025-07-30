@@ -220,6 +220,8 @@ class TournamentManager:
                             direction = self.agent.random_based_agent(state, AGENT_IDX)
                         elif agent == "mcts":
                             direction = self.agent.mcts_based_agent(state, AGENT_IDX, 25)
+                        elif agent == "minimax":
+                            direction = self.agent.minimax_based_agent(state, AGENT_IDX, 4)
                         else:
                             raise ValueError
                         
@@ -405,13 +407,13 @@ if __name__ == "__main__":
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
     # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    MODELS = ["models/weighted_standard_mcts_bs_3712/out_weighted_standard_mcts_bs_3712"]
+    MODELS = ["models/weighted_standard_minimax/out_focused_standard_minimax_bs_1984"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
     # AGENTS = ["random", "bfs"]
-    AGENTS = ["mcts"]
+    AGENTS = ["minimax"]
 
     # SAMPLE = ["sampling"]
     SAMPLE = ["sampling"]
