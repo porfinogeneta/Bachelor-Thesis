@@ -6,7 +6,7 @@ from src.training.nanoGPT.tokenizer.tokenizer import Tokenizer
 
 
 # input_file_path = "/Users/szymon/Documents/Bachelor-Thesis/src/training/corpora/standard_positions/standard_positions20k.txt"
-input_file_path = "/home/ubuntu/Bachelor-Thesis/src/training/corpora/mcts_standard_positions/mcts_standard_positions_20k.txt"
+input_file_path = "/root/Bachelor-Thesis/src/training/corpora/mcts_standard_win_lost/mcts_standard_win_lost.txt"
 with open(input_file_path, 'r', encoding='utf-8') as f:
     data = f.read().replace("\n", " ")
 n = len(data)
@@ -78,5 +78,6 @@ val_ids = np.array(val_ids, dtype=np.uint16)
 train_ids.tofile(os.path.join(os.path.dirname(__file__), 'train.bin'))
 val_ids.tofile(os.path.join(os.path.dirname(__file__), 'val.bin'))
 
-# train.bin has 301,966 tokens
-# val.bin has 36,059 tokens
+# tokens amount 384
+# train has 38,565,947 tokens
+# val has 4,285,106 tokens

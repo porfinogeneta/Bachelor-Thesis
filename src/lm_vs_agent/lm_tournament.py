@@ -405,13 +405,13 @@ if __name__ == "__main__":
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
     # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    MODELS = ["models/weighted_standard_bfs/out_weighted_standard_bfs_bs_1472"]
+    MODELS = ["models/weighted_standard_mcts_bs_3712/out_weighted_standard_mcts_bs_3712"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]
 
     # AGENTS = ["random", "bfs"]
-    AGENTS = ["bfs"]
+    AGENTS = ["mcts"]
 
     # SAMPLE = ["sampling"]
     SAMPLE = ["sampling"]
