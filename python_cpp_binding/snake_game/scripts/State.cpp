@@ -726,13 +726,13 @@ double State::score_state(const State& initial_state) {
     // penalty for dying
     if (!is_snake_alive(maximized_player)) {
         // cout << "Penalty for dying, returning -100" << endl;
-        score -=15.0;
+        score -=5.0;
     }
 
     // penalty for blocking the maximized snake
-    if (is_snake_alive(maximized_player) && get_all_possible_moves(maximized_player).empty()){
+    if (get_all_possible_moves(maximized_player).empty()){
         // cout << "Blocked maximized snake, returning -100" << endl;
-        score  -=15.0;
+        score  -=5.0;
     }
 
     // killing the opponent score
@@ -740,7 +740,7 @@ double State::score_state(const State& initial_state) {
         && !is_snake_alive(minimized_player)
         ) {
             // cout << "Killed opponent, adding score normal" << endl;
-            score += 30.0;
+            score += 7.0 * pow(0.85, turn - initial_state.turn);
     }
 
 
@@ -758,8 +758,8 @@ double State::score_state(const State& initial_state) {
     int snake_initial_length = initial_state.snakes[maximized_player].tail.size() + 1; // +1 for head
     int snake_current_length = snakes[maximized_player].tail.size() + 1; // +1 for head
     
-    if (is_snake_alive(maximized_player) && snake_initial_length < snake_current_length) {
-        score += (snake_current_length - snake_initial_length) * 2.0;
+    if (snake_initial_length < snake_current_length) {
+        score += (snake_current_length - snake_initial_length) * 2.0 * pow(0.85, turn - initial_state.turn);
     }
 
     // closer to apples score
