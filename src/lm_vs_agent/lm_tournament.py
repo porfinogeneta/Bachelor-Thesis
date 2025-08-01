@@ -407,7 +407,7 @@ if __name__ == "__main__":
     #, "out_standard_positions_bs_64", "out_standard_positions_bs_128", "out_standard_positions_bs_1600", "out_standard_positions_bs_8000"
     #, "aligned_games/out_aligned_bs_2240", "aligned_games/out_aligned_bs_512"
     # MODELS = ["apples_corpora/out_apples_corpora_bs_32", "apples_corpora/out_apples_corpora_bs_1152"]
-    MODELS = ["models/weighted_standard_minimax/out_focused_standard_minimax_bs_1984"]
+    MODELS = ["models/standard_mix_minimax_bfs/out_standard_mix_minimax_bfs_bs_1664"]
     # MODELS = ["standard_positions/out_standard_positions_bs_8"]
 
     # MODELS = ["out_standard_positions_bs_64"]

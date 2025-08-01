@@ -22,9 +22,8 @@ RAW_DATA_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_h
 RAW_DATA_TAILS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k_tails.txt")
 RAW_DATA_MCTS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history20k_mcts.txt")
 RAW_TEST_DATA_10 = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_tails_bfs_10.txt")
-RAW_DATA_MINIMAX_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history_minimax20k.txt")
 RAW_DATA_BFS_20K = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_state_history_bfs20k.txt")
-
+RAW_DATA_MIX_MINIMAX_BFS = PROJECT_PATH / pathlib.Path("src/training/corpora/raw/raw_mix_minimax_bfs.txt")
 
 # MODEL CONSTS
 TRAIN_VAL_SPLIT = 0.9

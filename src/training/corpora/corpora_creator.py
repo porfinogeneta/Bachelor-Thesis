@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pathlib
 import re
 
-from src.consts import CORPORA_DIR, CORPORA_DELIMETER, RAW_DATA_20K, RAW_DATA_BFS_20K, RAW_TEST_DATA_10, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT, RAW_DATA_TAILS_20K, RAW_DATA_MCTS_20K, RAW_DATA_MINIMAX_20K
+from src.consts import CORPORA_DIR, RAW_DATA_MIX_MINIMAX_BFS, CORPORA_DELIMETER, RAW_DATA_20K, RAW_DATA_BFS_20K, RAW_TEST_DATA_10, GAMES_IN_RAW_FILE, TRAIN_VAL_SPLIT, RAW_DATA_TAILS_20K, RAW_DATA_MCTS_20K, RAW_DATA_MINIMAX_20K
 
 # logger
 from src.logger.logger import setup_logger
@@ -560,10 +560,10 @@ class CorporaCreator:
 if __name__ == "__main__":
     
     # creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_TAILS_20K)
-    creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_MINIMAX_20K)
+    creator = CorporaCreator(delimenter=CORPORA_DELIMETER, path_to_raw_data=RAW_DATA_MIX_MINIMAX_BFS)
 
-    COPR_DIR = CORPORA_DIR / pathlib.Path("minimax_standard_win_lost")
-    OUT_CORP_FILE = pathlib.Path("minimax_standard_win_lost.txt")
+    COPR_DIR = CORPORA_DIR / pathlib.Path("mix_minimax_bfs")
+    OUT_CORP_FILE = pathlib.Path("mix_minimax_bfs.txt")
     
     # creator.create_apple_corpora(output_folder=COPR_DIR, output_filename=OUT_CORP_FILE)
 
